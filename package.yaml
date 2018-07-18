@@ -1,0 +1,39 @@
+name:                language-cplusplus
+version:             0.0.0.0
+github:              "dclxvi13/language-cplusplus"
+license:             BSD3
+author:              "dclxvi13"
+maintainer:          "dclxvi.13.x@gmail.com"
+copyright:           "Copyright (c) 2018 dclxvi13"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+synopsis:            Library for parsing C++ code
+category:            Language
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/dclxvi13/language-cplusplus#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- array >= 0.5
+- parsec >= 3.0
+
+library:
+  source-dirs: src
+
+tests:
+  language-cplusplus-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - language-cplusplus
