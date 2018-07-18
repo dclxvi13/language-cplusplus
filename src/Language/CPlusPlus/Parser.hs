@@ -84,6 +84,9 @@ data Expression
     { _idExpressionPos :: SourcePos
     , _idExpressionValue :: Either UnqualifiedId QualifiedId
     }
+  | LambdaExpression
+    { _lambdaExpressionPos :: SourcePos
+    }
 
 primaryExpression :: P Expression
 primaryExpression   = undefined
