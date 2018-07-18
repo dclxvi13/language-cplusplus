@@ -11,18 +11,7 @@ import Text.Parsec
 -- Version 3.2
 --
 -- Last updated: 12-Feb-2016
---
--- Purpose of this document
--- If you are a C++ developer then you sometimes need to have a look at the C++ BNF grammar. At least I do.
---
--- But reading a set of BNF rules is difficult since you have to jump from one rule to the next one, maybe pages away from it.
---
--- With this document I tried to make it easier to navigate among the BNF rules of the C++ language grammar; you can find here a hyperlinked graph whose nodes are the BNF productions of the C++ language grammar.
---
--- If you find errors or inconsistencies, please drop me a note.
---
--- The BNF non-terminal for a C++ translation unit (translation-unit) is defined here.
--- The BNF non-terminal for a C++ preprocessing file (preprocessing-file) is defined here.
+
 -- BNF Grammar Rules
 
 -- basic.link
