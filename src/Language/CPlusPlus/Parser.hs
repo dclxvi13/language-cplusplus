@@ -127,10 +127,32 @@ lambdaExpression :: P Expression
 lambdaExpression = undefined
 
 lambdaIntroducer = undefined
+
+data LambdaCapture
+  = LambdaCapture
+
+lambdaCapture :: P LambdaCapture
 lambdaCapture    = undefined
+
 captureDefault   = undefined
+
+data CaptureList = CaptureList
+  { _captureListPos :: SourcePos
+  , _captureListValue :: [Capture]
+  , _captureListHasThreeDot :: Bool
+  }
+
+captureList :: P CaptureList
 captureList      = undefined
+
+data Capture = Capture
+
+capture :: P Capture
 capture          = undefined
+
+data LambdaDeclarator = LambdaDeclarator
+
+lambdaDeclarator :: P LambdaDeclarator
 lambdaDeclarator = undefined
 
 -- expr.post
