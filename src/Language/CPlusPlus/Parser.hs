@@ -193,6 +193,8 @@ postfixExpression = undefined
 expressionList :: P [Expression]
 expressionList = undefined
 
+data PseudoDestructorName = PseudoDestructorName
+
 pseudoDestructorName = undefined
 
 -- expr.unary
@@ -218,6 +220,14 @@ pseudoDestructorName = undefined
 unaryExpression :: P Expression
 unaryExpression = undefined
 
+data UnaryOperator
+  = Ptr
+  | Ref
+  | UnaryPlus
+  | UnaryMinus
+  | Not
+  | Tilda
+
 unaryOperator = undefined
 
 -- expr.new
@@ -235,19 +245,32 @@ unaryOperator = undefined
 --  	[ expression ] attribute-specifier-seq[opt]     C++0x
 --  	noptr-new-declarator [ constant-expression ] attribute-specifier-seq[opt]     C++0x
 -- new-initializer:
---  	( expression-listopt )
+--  	( expression-list[opt] )
 --  	braced-init-list     C++0x
 newExpression :: P Expression
 newExpression = undefined
 
+newPlacement :: P [Expression]
 newPlacement = undefined
 
+data NewTypeId = NewTypeId
+
+newTypeId :: P NewTypeId
 newTypeId = undefined
 
+data NewDeclarator = NewDeclarator
+
+newDeclarator :: P NewDeclarator
 newDeclarator = undefined
 
+data NoptrNewDeclarator = NoptrNewDeclarator
+
+noptrNewDeclarator :: P NoptrNewDeclarator
 noptrNewDeclarator = undefined
 
+data NewInitializer = NewInitializer
+
+newInitializer :: P NewInitializer
 newInitializer = undefined
 
 -- expr.delete
@@ -383,6 +406,9 @@ conditionalExpression = undefined
 assignmentExpression :: P Expression
 assignmentExpression = undefined
 
+data AssignmentOperator = AssignmentOperator
+
+assignmentOperator :: P AssignmentOperator
 assignmentOperator = undefined
 
 -- expr.comma
@@ -474,10 +500,19 @@ condition = undefined
 iterationStatement :: P Statement
 iterationStatement = undefined
 
+data ForInitStatement = ForInitStatement
+
+forInitStatement :: P ForInitStatement
 forInitStatement = undefined
 
+data ForRangeDeclaration = ForRangeDeclaration
+
+forRangeDeclaration :: P ForRangeDeclaration
 forRangeDeclaration = undefined
 
+data ForRangeInitializer = ForRangeInitializer
+
+forRangeInitializer :: P ForRangeInitializer
 forRangeInitializer = undefined
 
 -- stmt.jump
@@ -604,6 +639,9 @@ functionSpecifier = undefined
 -- dcl.typedef
 -- typedef-name:
 --  	identifier
+data TypedefName = TypedefName
+
+typedefName :: P TypedefName
 typedefName = undefined
 
 -- dcl.type
@@ -628,10 +666,19 @@ data TypeSpecifier =
 typeSpecifier :: P TypeSpecifier
 typeSpecifier = undefined
 
+data TrailingTypeSpecifier = TrailingTypeSpecifier
+
+trailingTypeSpecifier :: P TrailingTypeSpecifier
 trailingTypeSpecifier = undefined
 
+data TypeSpecifierSeq = TypeSpecifierSeq
+
+typeSpecifierSeq :: P TypeSpecifierSeq
 typeSpecifierSeq = undefined
 
+data TrailingTypeSpecifierSeq = TrailingTypeSpecifierSeq
+
+trailingTypeSpecifierSeq :: P TrailingTypeSpecifierSeq
 trailingTypeSpecifierSeq = undefined
 
 -- dct.type.simple
@@ -660,10 +707,19 @@ trailingTypeSpecifierSeq = undefined
 --  	simple-template-id     C++0x
 -- decltype-specifier:
 --  	decltype ( expression )     C++0x
+data SimpleTypeSpecifier = SimpleTypeSpecifier
+
+simpleTypeSpecifier :: P SimpleTypeSpecifier
 simpleTypeSpecifier = undefined
 
+data TypeName = TypeName
+
+typeName :: P TypeName
 typeName = undefined
 
+data DecltypeSpecifier = DecltypeSpecifier
+
+decltypeSpecifier :: P DecltypeSpecifier
 decltypeSpecifier = undefined
 
 -- dcl.type.elab
@@ -671,19 +727,22 @@ decltypeSpecifier = undefined
 --  	class-key attribute-specifier-seq[opt] ::opt nested-name-specifier[opt] identifier
 --  	class-key ::opt nested-name-specifier[opt] template[opt] simple-template-id
 --  	enum ::opt nested-name-specifier[opt] identifier
+data ElaboratedTypeSpecifier = ElaboratedTypeSpecifier
+
+elaboratedTypeSpecifier :: P ElaboratedTypeSpecifier
 elaboratedTypeSpecifier = undefined
 
 -- dcl.enum
 -- enum-name:
 --  	identifier
 -- enum-specifier:
---  	enum-head { enumerator-listopt }     C++0x
+--  	enum-head { enumerator-list[opt] }     C++0x
 --  	enum-head { enumerator-list , }     C++0x
 -- enum-head:
---  	enum-key attribute-specifier-seqopt identifieropt enum-baseopt     C++0x
---  	enum-key attribute-specifier-seqopt nested-name-specifier identifier enum-baseopt     CD0x
+--  	enum-key attribute-specifier-seq[opt] identifier[opt] enum-base[opt]     C++0x
+--  	enum-key attribute-specifier-seq[opt] nested-name-specifier identifier enum-base[opt]     CD0x
 -- opaque-enum-declaration:
---  	enum-key attribute-specifier-seqopt identifier enum-baseopt ;     C++0x
+--  	enum-key attribute-specifier-seq[opt] identifier enum-base[opt] ;     C++0x
 -- enum-key:
 --  	enum     C++0x
 --  	enum class     C++0x
@@ -698,22 +757,46 @@ elaboratedTypeSpecifier = undefined
 --  	enumerator = constant-expression
 -- enumerator:
 --  	identifier
+data EnumName = EnumName
+
+enumName :: P EnumName
 enumName = undefined
 
+data EnumSpecifier = EnumSpecifier
+
+enumSpecifier :: P EnumSpecifier
 enumSpecifier = undefined
 
+data EnumHead = EnumHead
+
+enumHead :: P EnumHead
 enumHead = undefined
 
+opaqueEnumDeclaration :: P Declaration
 opaqueEnumDeclaration = undefined
 
+data EnumKeyType = Enum | EnumClass | EnumStruct
+data EnumKey = EnumKey
+
+enumKey :: P EnumKey
 enumKey = undefined
 
+data EnumBase = EnumBase
+
+enumBase :: P EnumBase
 enumBase = undefined
 
+enumeratorList :: P [EnumeratorDefinition]
 enumeratorList = undefined
 
+data EnumeratorDefinition = EnumeratorDefinition
+
+enumeratorDefinition :: P EnumeratorDefinition
 enumeratorDefinition = undefined
 
+data Enumerator = Enumerator
+
+enumerator :: P Enumerator
 enumerator = undefined
 
 -- namespace.def
@@ -739,6 +822,7 @@ namespaceName = undefined
 
 originalNamespaceName = undefined
 
+namespaceDefinition :: P Declaration
 namespaceDefinition = undefined
 
 namedNamespaceDefinition = undefined
@@ -760,6 +844,7 @@ namespaceBody = undefined
 --  	::opt nested-name-specifieropt namespace-name
 namespaceAlias = undefined
 
+namespaceAliasDefinition :: P Declaration
 namespaceAliasDefinition = undefined
 
 qualifiedNamespaceSpecifier = undefined
@@ -768,22 +853,26 @@ qualifiedNamespaceSpecifier = undefined
 -- using-declaration:
 --  	using typenameopt ::opt nested-name-specifier unqualified-id ;
 --  	using :: unqualified-id ;
+usingDeclaration :: P Declaration
 usingDeclaration = undefined
 
 -- namespace.udir
 -- using-directive:
 --  	attribute-specifier-seqopt using namespace ::opt nested-name-specifieropt namespace-name ;
+usingDirective :: P Declaration
 usingDirective = undefined
 
 -- dcl.asm
 -- asm-definition:
 --  	asm ( string-literal ) ;
+asmDefinition :: P Declaration
 asmDefinition = undefined
 
 -- dcl.link
 -- linkage-specification:
 --  	extern string-literal { declaration-seqopt }
 --  	extern string-literal declaration
+linkageSpecification :: P Declaration
 linkageSpecification = undefined
 
 -- dcl.attr.grammar
@@ -950,6 +1039,7 @@ parameterDeclaration = undefined
 -- function-body:
 --  	ctor-initializeropt compound-statement     C++0x
 --  	function-try-block     C++0x
+functionDefinition :: P Declaration
 functionDefinition = undefined
 
 functionBody = undefined
@@ -1182,6 +1272,7 @@ literalOperatorId = undefined
 -- template-parameter-list:
 --  	template-parameter
 --  	template-parameter-list , template-parameter
+templateDeclaration :: P Declaration
 templateDeclaration = undefined
 
 templateParameterList = undefined
@@ -1236,11 +1327,13 @@ typenameSpecifier = undefined
 -- temp.explicit
 -- explicit-instantiation:
 --  	externopt template declaration     C++0x
+explicitinstantiation :: P Declaration
 explicitinstantiation = undefined
 
 -- temp.expl.spec
 -- explicit-specialization:
 --  	template < > declaration
+explicitSpecialization :: P Declaration
 explicitSpecialization = undefined
 
 -- except
