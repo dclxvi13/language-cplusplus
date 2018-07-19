@@ -1,9 +1,10 @@
 module Language.CPlusPlus.Parser where
 
 --import Language.CPlusPlus.AST
-import Language.CPlusPlus.Token
+import           Language.CPlusPlus.Base
+import           Language.CPlusPlus.Token
 
-import Text.Parsec
+import           Text.Parsec
 
 -- Hyperlinked C++ BNF Grammar
 -- By Alessio Marchetti
@@ -11,17 +12,17 @@ import Text.Parsec
 -- Version 3.2
 --
 -- Last updated: 12-Feb-2016
-
 -- BNF Grammar Rules
-
 -- basic.link
 -- translation-unit:
 --  	declaration-seq[opt]
-
-data TranslationUnit = TU [Declaration]
+data TranslationUnit =
+  TU [Declaration]
 
 translationUnit :: P TranslationUnit
-translationUnit = option [] declarationSeq
+translationUnit = do
+  ds <- option [] declarationSeq
+  return $ TU ds
 
 -- expr.prim.general
 -- primary-expression:
@@ -53,50 +54,51 @@ translationUnit = option [] declarationSeq
 --  	decltype-specifier ::     C++0x
 --  	nested-name-specifier identifier ::
 --  	nested-name-specifier template[opt] simple-template-id ::
-
 type Literal = String
-type Id      = String
+
+type Id = String
 
 data Expression
-  = LiteralExpression
-    { _literalExpressionPos   :: SourcePos
-    , _literalExpressionValue :: Literal
-    }
-  | ThisExpression
-    { _thisExpressionPos :: SourcePos
-    }
-  | ParensedExpression
-    { _parensedExpressionPos   :: SourcePos
-    , _parensedExpressionValue :: Expression
-    }
-  | IdExpression
-    { _idExpressionPos :: SourcePos
-    , _idExpressionValue :: Either UnqualifiedId QualifiedId
-    }
-  | LambdaExpression
-    { _lambdaExpressionPos :: SourcePos
-    }
+  = LiteralExpression { _literalExpressionPos   :: SourcePos
+                      , _literalExpressionValue :: Literal }
+  | ThisExpression { _thisExpressionPos :: SourcePos }
+  | ParensedExpression { _parensedExpressionPos   :: SourcePos
+                       , _parensedExpressionValue :: Expression }
+  | IdExpression { _idExpressionPos   :: SourcePos
+                 , _idExpressionValue :: Either UnqualifiedId QualifiedId }
+  | LambdaExpression { _lambdaExpressionPos :: SourcePos }
 
 primaryExpression :: P Expression
-primaryExpression   = undefined
+primaryExpression =
+  (do pos <- getPosition
+      l <- literal
+      return $ LiteralExpression pos l) <|>
+  (do pos <- getPosition
+      kwThis
+      return $ ThisExpression pos) <|>
+  (do pos <- getPosition
+      e <- parens $ expression
+      return $ ParensedExpression pos e) <|>
+  idExpression <|>
+  lambdaExpression
 
 idExpression :: P Expression
-idExpression        = undefined
+idExpression = undefined
 
-data UnqualifiedId
-  = UnqualifiedId
+data UnqualifiedId =
+  UnqualifiedId
 
-data QualifiedId
-  = QualifiedId
+data QualifiedId =
+  QualifiedId
 
 unqualifiedId :: P UnqualifiedId
-unqualifiedId       = undefined
+unqualifiedId = undefined
 
 qualifiedId :: P QualifiedId
-qualifiedId         = undefined
+qualifiedId = undefined
 
-data NestedNameSpecifier
-  = NestedNameSpecifier
+data NestedNameSpecifier =
+  NestedNameSpecifier
 
 nestedNameSpecifier :: P NestedNameSpecifier
 nestedNameSpecifier = undefined
@@ -122,35 +124,36 @@ nestedNameSpecifier = undefined
 --  	this     C++0x
 -- lambda-declarator:
 --  	( parameter-declaration-clause ) mutable[opt] exception-specification[opt] attribute-specifier-seq[opt] trailing-return-type[opt]     C++0x
-
 lambdaExpression :: P Expression
 lambdaExpression = undefined
 
 lambdaIntroducer = undefined
 
-data LambdaCapture
-  = LambdaCapture
+data LambdaCapture =
+  LambdaCapture
 
 lambdaCapture :: P LambdaCapture
-lambdaCapture    = undefined
+lambdaCapture = undefined
 
-captureDefault   = undefined
+captureDefault = undefined
 
 data CaptureList = CaptureList
-  { _captureListPos :: SourcePos
-  , _captureListValue :: [Capture]
+  { _captureListPos         :: SourcePos
+  , _captureListValue       :: [Capture]
   , _captureListHasThreeDot :: Bool
   }
 
 captureList :: P CaptureList
-captureList      = undefined
+captureList = undefined
 
-data Capture = Capture
+data Capture =
+  Capture
 
 capture :: P Capture
-capture          = undefined
+capture = undefined
 
-data LambdaDeclarator = LambdaDeclarator
+data LambdaDeclarator =
+  LambdaDeclarator
 
 lambdaDeclarator :: P LambdaDeclarator
 lambdaDeclarator = undefined
@@ -184,12 +187,11 @@ lambdaDeclarator = undefined
 --  	::opt nested-name-specifier template simple-template-id :: ~ type-name     C++0x
 --  	::opt nested-name-specifier[opt] ~ type-name
 --  	~ decltype-specifier     C++0x
-
 postfixExpression :: P Expression
-postfixExpression    = undefined
+postfixExpression = undefined
 
 expressionList :: P [Expression]
-expressionList       = undefined
+expressionList = undefined
 
 pseudoDestructorName = undefined
 
@@ -213,11 +215,10 @@ pseudoDestructorName = undefined
 --  	-
 --  	!
 --  	~
-
 unaryExpression :: P Expression
 unaryExpression = undefined
 
-unaryOperator   = undefined
+unaryOperator = undefined
 
 -- expr.new
 -- new-expression:
@@ -236,28 +237,29 @@ unaryOperator   = undefined
 -- new-initializer:
 --  	( expression-listopt )
 --  	braced-init-list     C++0x
-
 newExpression :: P Expression
-newExpression      = undefined
+newExpression = undefined
 
-newPlacement       = undefined
-newTypeId          = undefined
-newDeclarator      = undefined
+newPlacement = undefined
+
+newTypeId = undefined
+
+newDeclarator = undefined
+
 noptrNewDeclarator = undefined
-newInitializer     = undefined
+
+newInitializer = undefined
 
 -- expr.delete
 -- delete-expression:
 --  	::opt delete cast-expression
 --  	::opt delete [ ] cast-expression
-
 deleteExpression :: P Expression
 deleteExpression = undefined
 
 -- expr.unary.noexcept
 -- noexcept-expression:
 --  	noexcept ( expression )     C++0x
-
 noexceptExpression :: P Expression
 noexceptExpression = undefined
 
@@ -265,7 +267,6 @@ noexceptExpression = undefined
 -- cast-expression:
 --  	unary-expression
 --  	( type-id ) cast-expression
-
 castExpression :: P Expression
 castExpression = undefined
 
@@ -274,7 +275,6 @@ castExpression = undefined
 --  	cast-expression
 --  	pm-expression .* cast-expression
 --  	pm-expression ->* cast-expression
-
 pmExpression :: P Expression
 pmExpression = undefined
 
@@ -284,7 +284,6 @@ pmExpression = undefined
 --  	multiplicative-expression * pm-expression
 --  	multiplicative-expression / pm-expression
 --  	multiplicative-expression % pm-expression
-
 multiplicativeExpression :: P Expression
 multiplicativeExpression = undefined
 
@@ -293,7 +292,6 @@ multiplicativeExpression = undefined
 --  	multiplicative-expression
 --  	additive-expression + multiplicative-expression
 --  	additive-expression - multiplicative-expression
-
 additiveExpression :: P Expression
 additiveExpression = undefined
 
@@ -302,7 +300,6 @@ additiveExpression = undefined
 --  	additive-expression
 --  	shift-expression << additive-expression
 --  	shift-expression >> additive-expression
-
 shiftExpression :: P Expression
 shiftExpression = undefined
 
@@ -313,7 +310,6 @@ shiftExpression = undefined
 --  	relational-expression > shift-expression
 --  	relational-expression <= shift-expression
 --  	relational-expression >= shift-expression
-
 relationalExpression :: P Expression
 relationalExpression = undefined
 
@@ -322,7 +318,6 @@ relationalExpression = undefined
 --  	relational-expression
 --  	equality-expression == relational-expression
 --  	equality-expression != relational-expression
-
 equalityExpression :: P Expression
 equalityExpression = undefined
 
@@ -330,7 +325,6 @@ equalityExpression = undefined
 -- and-expression:
 --  	equality-expression
 --  	and-expression & equality-expression
-
 andExpression :: P Expression
 andExpression = undefined
 
@@ -338,7 +332,6 @@ andExpression = undefined
 -- exclusive-or-expression:
 --  	and-expression
 --  	exclusive-or-expression ^ and-expression
-
 exclusiveOrExpression :: P Expression
 exclusiveOrExpression = undefined
 
@@ -346,7 +339,6 @@ exclusiveOrExpression = undefined
 -- inclusive-or-expression:
 --  	exclusive-or-expression
 --  	inclusive-or-expression | exclusive-or-expression
-
 inclusiveOrExpression :: P Expression
 inclusiveOrExpression = undefined
 
@@ -354,7 +346,6 @@ inclusiveOrExpression = undefined
 -- logical-and-expression:
 --  	inclusive-or-expression
 --  	logical-and-expression && inclusive-or-expression
-
 logicalAndExpression :: P Expression
 logicalAndExpression = undefined
 
@@ -362,7 +353,6 @@ logicalAndExpression = undefined
 -- logical-or-expression:
 --  	logical-and-expression
 --  	logical-or-expression || logical-and-expression
-
 logicalOrExpression :: P Expression
 logicalOrExpression = undefined
 
@@ -370,7 +360,6 @@ logicalOrExpression = undefined
 -- conditional-expression:
 --  	logical-or-expression
 --  	logical-or-expression ? expression : assignment-expression
-
 conditionalExpression :: P Expression
 conditionalExpression = undefined
 
@@ -391,24 +380,21 @@ conditionalExpression = undefined
 --  	&=
 --  	^=
 --  	|=
-
 assignmentExpression :: P Expression
 assignmentExpression = undefined
 
-assignmentOperator   = undefined
+assignmentOperator = undefined
 
 -- expr.comma
 -- expression:
 --  	assignment-expression
 --  	expression , assignment-expression
-
 expression :: P Expression
 expression = undefined
 
 -- expr.const
 -- constant-expression:
 --  	conditional-expression
-
 constantExpression :: P Expression
 constantExpression = undefined
 
@@ -422,8 +408,8 @@ constantExpression = undefined
 --  	attribute-specifier-seq[opt] jump-statement     C++0x
 --  	declaration-statement
 --  	attribute-specifier-seq[opt] try-block
-
-data Statement = Statement
+data Statement =
+  Statement
 
 statement :: P Statement
 statement = undefined
@@ -433,14 +419,12 @@ statement = undefined
 --  	attribute-specifier-seq[opt] identifier : statement
 --  	attribute-specifier-seq[opt] case constant-expression : statement
 --  	attribute-specifier-seq[opt] default : statement
-
 labeledStatement :: P Statement
 labeledStatement = undefined
 
 -- stmt.expr
 -- expression-statement:
 --  	expression[opt] ;
-
 expressionStatement :: P Statement
 expressionStatement = undefined
 
@@ -450,12 +434,11 @@ expressionStatement = undefined
 -- statement-seq:
 --  	statement
 --  	statement-seq statement
-
 compoundStatement :: P Statement
 compoundStatement = undefined
 
 statementSeq :: P [Statement]
-statementSeq      = undefined
+statementSeq = undefined
 
 -- stmt.select
 -- selection-statement:
@@ -466,14 +449,14 @@ statementSeq      = undefined
 --  	expression
 --  	attribute-specifier-seqopt decl-specifier-seq declarator = initializer-clause     C++0x
 --  	attribute-specifier-seqopt decl-specifier-seq declarator braced-init-list     C++0x
-
 selectionStatement :: P Statement
 selectionStatement = undefined
 
-data Condition = Condition
+data Condition =
+  Condition
 
 condition :: P Condition
-condition          = undefined
+condition = undefined
 
 -- stmt.iter
 -- iteration-statement:
@@ -488,12 +471,13 @@ condition          = undefined
 --  	attribute-specifier-seq[opt] type-specifier-seq declarator     C++0x
 -- for-range-initializer:
 --  	expression braced-init-list     C++0x
-
 iterationStatement :: P Statement
-iterationStatement  = undefined
+iterationStatement = undefined
 
-forInitStatement    = undefined
+forInitStatement = undefined
+
 forRangeDeclaration = undefined
+
 forRangeInitializer = undefined
 
 -- stmt.jump
@@ -503,14 +487,12 @@ forRangeInitializer = undefined
 --  	return expressionopt ;
 --  	return braced-init-listopt ;     C++0x
 --  	goto identifier ;
-
 jumpStatement :: P Statement
 jumpStatement = undefined
 
 -- stmt.dcl
 -- declaration-statement:
 --  	block-declaration
-
 declarationStatement :: P Statement
 declarationStatement = undefined
 
@@ -547,32 +529,32 @@ declarationStatement = undefined
 --  	;     C++0x
 -- attribute-declaration:
 --  	attribute-specifier-seq ;     C++0x
-
-data Declaration = Declaration
+data Declaration =
+  Declaration
 
 declarationSeq :: P [Declaration]
-declarationSeq          = undefined
+declarationSeq = undefined
 
 declaration :: P Declaration
-declaration             = undefined
+declaration = undefined
 
 blockDeclaration :: P Declaration
-blockDeclaration        = undefined
+blockDeclaration = undefined
 
 aliasDeclaration :: P Declaration
-aliasDeclaration        = undefined
+aliasDeclaration = undefined
 
 simpleDeclaration :: P Declaration
-simpleDeclaration       = undefined
+simpleDeclaration = undefined
 
 staticAssertDeclaration :: P Declaration
 staticAssertDeclaration = undefined
 
 emptyDeclaration :: P Declaration
-emptyDeclaration        = undefined
+emptyDeclaration = undefined
 
 attributeDeclaration :: P Declaration
-attributeDeclaration    = undefined
+attributeDeclaration = undefined
 
 -- dcl.spec
 -- decl-specifier:
@@ -585,11 +567,11 @@ attributeDeclaration    = undefined
 -- decl-specifier-seq:
 --  	decl-specifier attribute-specifier-seq[opt]     C++0x
 --  	decl-specifier decl-specifier-seq     C++0x
-
-data DeclSpecifier = DeclSpecifier
+data DeclSpecifier =
+  DeclSpecifier
 
 declSpecifier :: P DeclSpecifier
-declSpecifier    = undefined
+declSpecifier = undefined
 
 declSpecifierSeq :: P [DeclSpecifier]
 declSpecifierSeq = undefined
@@ -602,8 +584,8 @@ declSpecifierSeq = undefined
 --  	thread_local     C++0x
 --  	extern
 --  	mutable
-
-data StorageClassSpecifier = StorageClassSpecifier
+data StorageClassSpecifier =
+  StorageClassSpecifier
 
 storageClassSpecifier :: P StorageClassSpecifier
 storageClassSpecifier = undefined
@@ -613,8 +595,8 @@ storageClassSpecifier = undefined
 --  	inline
 --  	virtual
 --  	explicit
-
-data FunctionSpecifier = FunctionSpecifier
+data FunctionSpecifier =
+  FunctionSpecifier
 
 functionSpecifier :: P FunctionSpecifier
 functionSpecifier = undefined
@@ -622,7 +604,6 @@ functionSpecifier = undefined
 -- dcl.typedef
 -- typedef-name:
 --  	identifier
-
 typedefName = undefined
 
 -- dcl.type
@@ -641,14 +622,16 @@ typedefName = undefined
 -- trailing-type-specifier-seq:
 --  	trailing-type-specifier attribute-specifier-seq[opt]     C++0x
 --  	trailing-type-specifier trailing-type-specifier-seq     C++0x
-
-data TypeSpecifier = TypeSpecifier
+data TypeSpecifier =
+  TypeSpecifier
 
 typeSpecifier :: P TypeSpecifier
-typeSpecifier            = undefined
+typeSpecifier = undefined
 
-trailingTypeSpecifier    = undefined
-typeSpecifierSeq         = undefined
+trailingTypeSpecifier = undefined
+
+typeSpecifierSeq = undefined
+
 trailingTypeSpecifierSeq = undefined
 
 -- dct.type.simple
@@ -677,17 +660,17 @@ trailingTypeSpecifierSeq = undefined
 --  	simple-template-id     C++0x
 -- decltype-specifier:
 --  	decltype ( expression )     C++0x
-
 simpleTypeSpecifier = undefined
-typeName            = undefined
-decltypeSpecifier   = undefined
+
+typeName = undefined
+
+decltypeSpecifier = undefined
 
 -- dcl.type.elab
 -- elaborated-type-specifier:
 --  	class-key attribute-specifier-seq[opt] ::opt nested-name-specifier[opt] identifier
 --  	class-key ::opt nested-name-specifier[opt] template[opt] simple-template-id
 --  	enum ::opt nested-name-specifier[opt] identifier
-
 elaboratedTypeSpecifier = undefined
 
 -- dcl.enum
@@ -715,16 +698,23 @@ elaboratedTypeSpecifier = undefined
 --  	enumerator = constant-expression
 -- enumerator:
 --  	identifier
+enumName = undefined
 
-enumName              = undefined
-enumSpecifier         = undefined
-enumHead              = undefined
+enumSpecifier = undefined
+
+enumHead = undefined
+
 opaqueEnumDeclaration = undefined
-enumKey               = undefined
-enumBase              = undefined
-enumeratorList        = undefined
-enumeratorDefinition  = undefined
-enumerator            = undefined
+
+enumKey = undefined
+
+enumBase = undefined
+
+enumeratorList = undefined
+
+enumeratorDefinition = undefined
+
+enumerator = undefined
 
 -- namespace.def
 -- namespace-name:
@@ -745,15 +735,21 @@ enumerator            = undefined
 --  	inlineopt namespace { namespace-body }
 -- namespace-body:
 --  	declaration-seqopt
+namespaceName = undefined
 
-namespaceName                = undefined
-originalNamespaceName        = undefined
-namespaceDefinition          = undefined
-namedNamespaceDefinition     = undefined
-originalNamespaceDefinition  = undefined
+originalNamespaceName = undefined
+
+namespaceDefinition = undefined
+
+namedNamespaceDefinition = undefined
+
+originalNamespaceDefinition = undefined
+
 extensionNamespaceDefinition = undefined
-unnamedNamespaceDefinition   = undefined
-namespaceBody                = undefined
+
+unnamedNamespaceDefinition = undefined
+
+namespaceBody = undefined
 
 -- namespace.alias
 -- namespace-alias:
@@ -762,35 +758,32 @@ namespaceBody                = undefined
 --  	namespace identifier = qualified-namespace-specifier ;
 -- qualified-namespace-specifier:
 --  	::opt nested-name-specifieropt namespace-name
+namespaceAlias = undefined
 
-namespaceAlias              = undefined
-namespaceAliasDefinition    = undefined
+namespaceAliasDefinition = undefined
+
 qualifiedNamespaceSpecifier = undefined
 
 -- namespace.udecl
 -- using-declaration:
 --  	using typenameopt ::opt nested-name-specifier unqualified-id ;
 --  	using :: unqualified-id ;
-
 usingDeclaration = undefined
 
 -- namespace.udir
 -- using-directive:
 --  	attribute-specifier-seqopt using namespace ::opt nested-name-specifieropt namespace-name ;
-
 usingDirective = undefined
 
 -- dcl.asm
 -- asm-definition:
 --  	asm ( string-literal ) ;
-
 asmDefinition = undefined
 
 -- dcl.link
 -- linkage-specification:
 --  	extern string-literal { declaration-seqopt }
 --  	extern string-literal declaration
-
 linkageSpecification = undefined
 
 -- dcl.attr.grammar
@@ -827,18 +820,27 @@ linkageSpecification = undefined
 --  	[ balanced-token-seq ]     C++0x
 --  	{ balanced-token-seq }     C++0x
 --  	token     C++0x - except a parenthesis, a bracket, or a brace
+attributeSpecifierSeq = undefined
 
-attributeSpecifierSeq   = undefined
-attributeSpecifier      = undefined
-alignmentSpecifier      = undefined
-attributeList           = undefined
-attribute               = undefined
-attributeToken          = undefined
-attributeScopedToken    = undefined
-attributeNamespace      = undefined
+attributeSpecifier = undefined
+
+alignmentSpecifier = undefined
+
+attributeList = undefined
+
+attribute = undefined
+
+attributeToken = undefined
+
+attributeScopedToken = undefined
+
+attributeNamespace = undefined
+
 attributeArgumentClause = undefined
-balancedTokenSeq        = undefined
-balancedToken           = undefined
+
+balancedTokenSeq = undefined
+
+balancedToken = undefined
 
 -- dcl.decl
 -- init-declarator-list:
@@ -878,18 +880,27 @@ balancedToken           = undefined
 -- declarator-id:
 --  	...opt id-expression     C++0x
 --  	::opt nested-name-specifieropt class-name     C++0x
+initDeclaratorList = undefined
 
-initDeclaratorList      = undefined
-declarator              = undefined
-ptrDeclarator           = undefined
-noptrDeclarator         = undefined
+declarator = undefined
+
+ptrDeclarator = undefined
+
+noptrDeclarator = undefined
+
 parametersAndQualifiers = undefined
-trailingReturnType      = undefined
-ptrOperator             = undefined
-cvQualifierSeq          = undefined
-cvQualifier             = undefined
-refQualifier            = undefined
-declaratorId            = undefined
+
+trailingReturnType = undefined
+
+ptrOperator = undefined
+
+cvQualifierSeq = undefined
+
+cvQualifier = undefined
+
+refQualifier = undefined
+
+declaratorId = undefined
 
 -- dcl.name
 -- type-id:
@@ -905,10 +916,12 @@ declaratorId            = undefined
 --  	noptr-abstract-declaratoropt parameters-and-qualifiers     C++0x
 --  	noptr-abstract-declaratoropt [ constant-expression ] attribute-specifier-seqopt     C++0x
 --  	( ptr-abstract-declarator )     C++0x
+typeId = undefined
 
-typeId                  = undefined
-abstractDeclarator      = undefined
-ptrAbstractDeclarator   = undefined
+abstractDeclarator = undefined
+
+ptrAbstractDeclarator = undefined
+
 noptrAbstractDeclarator = undefined
 
 -- dcl.fct
@@ -923,9 +936,10 @@ noptrAbstractDeclarator = undefined
 --  	attribute-specifier-seqopt decl-specifier-seq declarator = initializer-clause     C++0x
 --  	attribute-specifier-seqopt decl-specifier-seq abstract-declaratoropt     C++0x
 --  	attribute-specifier-seqopt decl-specifier-seq abstract-declaratoropt = initializer-clause     C++0x
-
 parameterDeclarationClause = undefined
+
 parameterDeclarationList = undefined
+
 parameterDeclaration = undefined
 
 -- dcl.fct.def.general
@@ -936,9 +950,9 @@ parameterDeclaration = undefined
 -- function-body:
 --  	ctor-initializeropt compound-statement     C++0x
 --  	function-try-block     C++0x
-
 functionDefinition = undefined
-functionBody       = undefined
+
+functionBody = undefined
 
 -- dcl.init
 -- initializer:
@@ -956,12 +970,15 @@ functionBody       = undefined
 -- braced-init-list:
 --  	{ initializer-list ,opt }     C++0x
 --  	{ }     C++0x
+initializer = undefined
 
-initializer             = undefined
 braceOrEqualInitializer = undefined
-initializerClause       = undefined
-initializerList         = undefined
-bracedInitList          = undefined
+
+initializerClause = undefined
+
+initializerList = undefined
+
+bracedInitList = undefined
 
 -- class
 -- class-name:
@@ -984,14 +1001,19 @@ bracedInitList          = undefined
 --  	class
 --  	struct
 --  	union
+className = undefined
 
-className             = undefined
-classSpecifier        = undefined
-classHead             = undefined
-classHeadName         = undefined
+classSpecifier = undefined
+
+classHead = undefined
+
+classHeadName = undefined
+
 classVirtSpecifierSeq = undefined
-classVirtSpecifier    = undefined
-classKey              = undefined
+
+classVirtSpecifier = undefined
+
+classKey = undefined
 
 -- class.mem
 -- member-specification:
@@ -1020,14 +1042,19 @@ classKey              = undefined
 --  	new
 -- pure-specifier:
 --  	= 0
+memberSpecification = undefined
 
-memberSpecification  = undefined
-memberDeclaration    = undefined
+memberDeclaration = undefined
+
 memberDeclaratorList = undefined
-memberDeclarator     = undefined
-virtSpecifierSeq     = undefined
-virtSpecifier        = undefined
-pureSpecifier        = undefined
+
+memberDeclarator = undefined
+
+virtSpecifierSeq = undefined
+
+virtSpecifier = undefined
+
+pureSpecifier = undefined
 
 -- class.derived
 -- base-clause:
@@ -1048,12 +1075,16 @@ pureSpecifier        = undefined
 --  	private
 --  	protected
 --  	public
-
 baseClause = undefined
+
 baseSpecifierList = undefined
+
 baseSpecifier = undefined
+
 classOrDecltype = undefined
+
 baseTypeSpecifier = undefined
+
 accessSpecifier = undefined
 
 -- class.conv.fct
@@ -1063,9 +1094,10 @@ accessSpecifier = undefined
 --  	type-specifier-seq conversion-declaratoropt
 -- conversion-declarator:
 --  	ptr-operator conversion-declaratoropt
-
 conversionFunctionId = undefined
+
 conversionTypeId = undefined
+
 conversionDeclarator = undefined
 
 -- class.base.init
@@ -1080,10 +1112,12 @@ conversionDeclarator = undefined
 -- mem-initializer-id:
 --  	class-or-decltype
 --  	identifier
-
 ctorInitializer = undefined
+
 memInitializerList = undefined
+
 memInitializer = undefined
+
 memInitializerId = undefined
 
 -- over.oper
@@ -1133,14 +1167,13 @@ memInitializerId = undefined
 --  	->
 --  	()
 --  	[]
-
 operatorFunctionId = undefined
+
 overloadableOperator = undefined
 
 -- over.literal
 -- literal-operator-id:
 --  	operator "" identifier     C++0x
-
 literalOperatorId = undefined
 
 -- temp
@@ -1149,8 +1182,8 @@ literalOperatorId = undefined
 -- template-parameter-list:
 --  	template-parameter
 --  	template-parameter-list , template-parameter
-
 templateDeclaration = undefined
+
 templateParameterList = undefined
 
 -- temp.param
@@ -1164,8 +1197,8 @@ templateParameterList = undefined
 --  	typename identifier[opt] = type-id
 --  	template < template-parameter-list > class ...opt identifier[opt]     C++0x
 --  	template < template-parameter-list > class identifier[opt] = id-expression
-
 templateParameter = undefined
+
 typeParameter = undefined
 
 -- temp.names
@@ -1184,30 +1217,30 @@ typeParameter = undefined
 --  	constant-expression     C++0x
 --  	type-id     C++0x
 --  	id-expression     C++0x
-
 simpleTemplateId = undefined
+
 templateId = undefined
+
 templateName = undefined
+
 templateArgumentList = undefined
+
 templateArgument = undefined
 
 -- temp.res
 -- typename-specifier:
 --  	typename ::opt nested-name-specifier identifier     C++0x
 --  	typename ::opt nested-name-specifier template[opt] simple-template-id     C++0x
-
 typenameSpecifier = undefined
 
 -- temp.explicit
 -- explicit-instantiation:
 --  	externopt template declaration     C++0x
-
 explicitinstantiation = undefined
 
 -- temp.expl.spec
 -- explicit-specialization:
 --  	template < > declaration
-
 explicitSpecialization = undefined
 
 -- except
@@ -1226,12 +1259,16 @@ explicitSpecialization = undefined
 --  	...     C++0x
 -- throw-expression:
 --  	throw assignment-expression[opt]
-
 tryBlock = undefined
+
 functionTryBlock = undefined
+
 handlerSeq = undefined
+
 handler = undefined
+
 exceptionDeclaration = undefined
+
 throwExpression = undefined
 
 -- except.spec
@@ -1246,8 +1283,10 @@ throwExpression = undefined
 -- noexcept-specification:
 --  	noexcept ( constant-expression )     C++0x
 --  	noexcept     C++0x
-
 exceptionSpecification = undefined
+
 dynamicExceptionSpecification = undefined
+
 typeIdList = undefined
+
 noexceptSpecification = undefined
