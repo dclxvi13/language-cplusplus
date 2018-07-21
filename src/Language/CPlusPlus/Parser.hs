@@ -812,27 +812,47 @@ enumerator = undefined
 --  	original-namespace-definition
 --  	extension-namespace-definition
 -- original-namespace-definition:
---  	inlineopt namespace identifier { namespace-body }     C++0x
+--  	inline[opt] namespace identifier { namespace-body }     C++0x
 -- extension-namespace-definition:
---  	inlineopt namespace original-namespace-name { namespace-body }     C++0xD- unnamed-namespace-definition:
---  	inlineopt namespace { namespace-body }
+--  	inline[opt] namespace original-namespace-name { namespace-body }     C++0xD
+-- unnamed-namespace-definition:
+--  	inline[opt] namespace { namespace-body }
 -- namespace-body:
---  	declaration-seqopt
+--  	declaration-seq[opt]
+data NamespaceName = NamespaceName
+
+namespaceName :: P NamespaceName
 namespaceName = undefined
 
+data OriginalNamespaceName = OriginalNamespaceName
+
+originalNamespaceName :: P OriginalNamespaceName
 originalNamespaceName = undefined
 
 namespaceDefinition :: P Declaration
 namespaceDefinition = undefined
 
+data NamedNamespaceDefinition = NamedNamespaceDefinition
+
+namedNamespaceDefinition :: P NamedNamespaceDefinition
 namedNamespaceDefinition = undefined
 
+data OriginalNamespaceDefinition = OriginalNamespaceDefinition
+
+originalNamespaceDefinition :: P OriginalNamespaceDefinition
 originalNamespaceDefinition = undefined
 
+data ExtensionNamespaceDefinition = ExtensionNamespaceDefinition
+
+extensionNamespaceDefinition :: P ExtensionNamespaceDefinition
 extensionNamespaceDefinition = undefined
 
+data UnnamedNamespaceDefinition = UnnamedNamespaceDefinition
+
+unnamedNamespaceDefinition :: P UnnamedNamespaceDefinition
 unnamedNamespaceDefinition = undefined
 
+namespaceBody :: P [Declaration]
 namespaceBody = undefined
 
 -- namespace.alias
@@ -841,24 +861,30 @@ namespaceBody = undefined
 -- namespace-alias-definition:
 --  	namespace identifier = qualified-namespace-specifier ;
 -- qualified-namespace-specifier:
---  	::opt nested-name-specifieropt namespace-name
+--  	::opt nested-name-specifier[opt] namespace-name
+data NamespaceAlias = NamespaceAlias
+
+namespaceAlias :: P NamespaceAlias
 namespaceAlias = undefined
 
 namespaceAliasDefinition :: P Declaration
 namespaceAliasDefinition = undefined
 
+data QualifiedNamespaceSpecifier = QualifiedNamespaceSpecifier
+
+qualifiedNamespaceSpecifier :: P QualifiedNamespaceSpecifier
 qualifiedNamespaceSpecifier = undefined
 
 -- namespace.udecl
 -- using-declaration:
---  	using typenameopt ::opt nested-name-specifier unqualified-id ;
+--  	using typename[opt] ::opt nested-name-specifier unqualified-id ;
 --  	using :: unqualified-id ;
 usingDeclaration :: P Declaration
 usingDeclaration = undefined
 
 -- namespace.udir
 -- using-directive:
---  	attribute-specifier-seqopt using namespace ::opt nested-name-specifieropt namespace-name ;
+--  	attribute-specifier-seq[opt] using namespace ::opt nested-name-specifier[opt] namespace-name ;
 usingDirective :: P Declaration
 usingDirective = undefined
 
@@ -870,7 +896,7 @@ asmDefinition = undefined
 
 -- dcl.link
 -- linkage-specification:
---  	extern string-literal { declaration-seqopt }
+--  	extern string-literal { declaration-seq[opt] }
 --  	extern string-literal declaration
 linkageSpecification :: P Declaration
 linkageSpecification = undefined
@@ -886,12 +912,12 @@ linkageSpecification = undefined
 --  	alignas ( type-id ...opt )     C++0x
 --  	alignas ( alignment-expression ...opt )     C++0x
 -- attribute-list:
---  	attributeopt     C++0x
---  	attribute-list , attributeopt     C++0x
+--  	attribute[opt]     C++0x
+--  	attribute-list , attribute[opt]     C++0x
 --  	attribute ...     C++0x
 --  	attribute-list , attribute ...     C++0x
 -- attribute:
---  	attribute-token attribute-argument-clauseopt     C++0x
+--  	attribute-token attribute-argument-clause[opt]     C++0x
 -- attribute-token:
 --  	identifier     C++0x
 --  	attribute-scoped-token     C++0x
@@ -909,26 +935,55 @@ linkageSpecification = undefined
 --  	[ balanced-token-seq ]     C++0x
 --  	{ balanced-token-seq }     C++0x
 --  	token     C++0x - except a parenthesis, a bracket, or a brace
+attributeSpecifierSeq :: P [AttributeSpecifier]
 attributeSpecifierSeq = undefined
 
+data AttributeSpecifier = AttributeSpecifier
+
+attributeSpecifier :: P AttributeSpecifier
 attributeSpecifier = undefined
 
+data AlignmentSpecifier = AlignmentSpecifier
+
+alignmentSpecifier :: P AlignmentSpecifier
 alignmentSpecifier = undefined
 
+data AttributeList = AttributeList
+
+attributeList :: P AttributeList
 attributeList = undefined
 
+data Attribute = Attribute
+
+attribute :: P Attribute
 attribute = undefined
 
+data AttributeToken = AttributeToken
+
+attributeToken :: P AttributeToken
 attributeToken = undefined
 
+data AttributeScopedToken = AttributeScopedToken
+
+attributeScopedToken :: P AttributeScopedToken
 attributeScopedToken = undefined
 
+data AttributeNamespace = AttributeNamespace
+
+attributeNamespace :: P AttributeNamespace
 attributeNamespace = undefined
 
+data AttributeArgumentClause = AttributeArgumentClause
+
+attributeArgumentClause :: P AttributeArgumentClause
 attributeArgumentClause = undefined
 
+balancedTokenSeq :: P [BalancedToken]
 balancedTokenSeq = undefined
 
+data BalancedToken = BalancedToken
+
+balancedToken :: P BalancedToken
 balancedToken = undefined
 
 -- dcl.decl
@@ -936,7 +991,7 @@ balancedToken = undefined
 --  	init-declarator
 --  	init-declarator-list , init-declarator
 -- init-declarator:
---  	declarator initializeropt
+--  	declarator initializer[opt]
 -- declarator:
 --  	ptr-declarator     C++0x
 --  	noptr-declarator parameters-and-qualifiers trailing-return-type     C++0x
@@ -944,19 +999,19 @@ balancedToken = undefined
 --  	noptr-declarator     C++0x
 --  	ptr-operator ptr-declarator     C++0x
 -- noptr-declarator:
---  	declarator-id attribute-specifier-seqopt     C++0x
+--  	declarator-id attribute-specifier-seq[opt]     C++0x
 --  	noptr-declarator parameters-and-qualifiers     C++0x
---  	noptr-declarator [ constant-expressionopt ] attribute-specifier-seqopt     C++0x
+--  	noptr-declarator [ constant-expression[opt] ] attribute-specifier-seq[opt]     C++0x
 --  	( ptr-declarator )     C++0x
 -- parameters-and-qualifiers:
---  	( parameter-declaration-clause ) attribute-specifier-seqopt cv-qualifier-seqopt ref-qualifieropt exception-specificationopt     C++0x
+--  	( parameter-declaration-clause ) attribute-specifier-seq[opt] cv-qualifier-seq[opt] ref-qualifier[opt] exception-specification[opt]     C++0x
 -- trailing-return-type:
---  	-> trailing-type-specifier-seq abstract-declaratoropt     C++0x
+--  	-> trailing-type-specifier-seq abstract-declarator[opt]     C++0x
 -- ptr-operator:
---  	* attribute-specifier-seqopt cv-qualifier-seqopt     C++0x
---  	& attribute-specifier-seqopt     C++0x
---  	&& attribute-specifier-seqopt     C++0x
---  	::opt nested-name-specifier * attribute-specifier-seqopt cv-qualifier-seqopt     C++0x
+--  	* attribute-specifier-seq[opt] cv-qualifier-seq[opt]     C++0x
+--  	& attribute-specifier-seq[opt]     C++0x
+--  	&& attribute-specifier-seq[opt]     C++0x
+--  	::opt nested-name-specifier * attribute-specifier-seq[opt] cv-qualifier-seq[opt]     C++0x
 -- cv-qualifier-seq:
 --  	cv-qualifier
 --  	cv-qualifier cv-qualifier-seq
@@ -968,80 +1023,136 @@ balancedToken = undefined
 --  	&&     C++0x
 -- declarator-id:
 --  	...opt id-expression     C++0x
---  	::opt nested-name-specifieropt class-name     C++0x
+--  	::opt nested-name-specifier[opt] class-name     C++0x
+initDeclaratorList :: P [InitDeclarator]
 initDeclaratorList = undefined
 
+data InitDeclarator = InitDeclarator
+
+initDeclarator :: P InitDeclarator
+initDeclarator = undefined
+
+data Declarator = Declarator
+
+declarator :: P Declarator
 declarator = undefined
 
+data PtrDeclarator = PtrDeclarator
+
+ptrDeclarator :: P PtrDeclarator
 ptrDeclarator = undefined
 
+data NoptrDeclarator = NoptrDeclarator
+
+noptrDeclarator :: P NoptrDeclarator
 noptrDeclarator = undefined
 
+data ParametersAndQualifiers = ParametersAndQualifiers
+
+parametersAndQualifiers :: P ParametersAndQualifiers
 parametersAndQualifiers = undefined
 
+data TrailingReturnType = TrailingReturnType
+
+trailingReturnType :: P TrailingReturnType
 trailingReturnType = undefined
 
+data PtrOperator = PtrOperator
+
+ptrOperator :: P PtrOperator
 ptrOperator = undefined
 
+cvQualifierSeq :: P [CvQualifier]
 cvQualifierSeq = undefined
 
+data CvQualifier = CvQualifier
+
+cvQualifier :: P CvQualifier
 cvQualifier = undefined
 
+data RefQualifier = RefQualifier
+
+refQualifier :: P RefQualifier
 refQualifier = undefined
 
+data DeclaratorId = DeclaratorId
+
+declaratorId :: P DeclaratorId
 declaratorId = undefined
 
 -- dcl.name
 -- type-id:
---  	type-specifier-seq abstract-declaratoropt
+--  	type-specifier-seq abstract-declarator[opt]
 -- abstract-declarator:
 --  	ptr-abstract-declarator     C++0x
---  	noptr-abstract-declaratoropt parameters-and-qualifiers trailing-return-type     C++0x
+--  	noptr-abstract-declarator[opt] parameters-and-qualifiers trailing-return-type     C++0x
 --  	...     C++0x
 -- ptr-abstract-declarator:
 --  	noptr-abstract-declarator     C++0x
---  	ptr-operator ptr-abstract-declaratoropt     C++0x
+--  	ptr-operator ptr-abstract-declarator[opt]     C++0x
 -- noptr-abstract-declarator:
---  	noptr-abstract-declaratoropt parameters-and-qualifiers     C++0x
---  	noptr-abstract-declaratoropt [ constant-expression ] attribute-specifier-seqopt     C++0x
+--  	noptr-abstract-declarator[opt] parameters-and-qualifiers     C++0x
+--  	noptr-abstract-declarator[opt] [ constant-expression ] attribute-specifier-seq[opt]     C++0x
 --  	( ptr-abstract-declarator )     C++0x
+data TypeId = TypeId
+
+typeId :: P TypeId
 typeId = undefined
 
+data AbstractDeclarator = AbstractDeclarator
+
+abstractDeclarator :: P AbstractDeclarator
 abstractDeclarator = undefined
 
+data PtrAbstractDeclarator = PtrAbstractDeclarator
+
+ptrAbstractDeclarator :: P PtrAbstractDeclarator
 ptrAbstractDeclarator = undefined
 
+data NoptrAbstractDeclarator = NoptrAbstractDeclarator
+
+noptrAbstractDeclarator :: P NoptrAbstractDeclarator
 noptrAbstractDeclarator = undefined
 
 -- dcl.fct
 -- parameter-declaration-clause:
---  	parameter-declaration-listopt ...opt
+--  	parameter-declaration-list[opt] ...opt
 --  	parameter-declaration-list , ...
 -- parameter-declaration-list:
 --  	parameter-declaration
 --  	parameter-declaration-list , parameter-declaration
 -- parameter-declaration:
---  	attribute-specifier-seqopt decl-specifier-seq declarator     C++0x
---  	attribute-specifier-seqopt decl-specifier-seq declarator = initializer-clause     C++0x
---  	attribute-specifier-seqopt decl-specifier-seq abstract-declaratoropt     C++0x
---  	attribute-specifier-seqopt decl-specifier-seq abstract-declaratoropt = initializer-clause     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq declarator     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt]     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt] = initializer-clause     C++0x
+data ParameterDeclarationClause = ParameterDeclarationClause
+
+parameterDeclarationClause :: P ParameterDeclarationClause
 parameterDeclarationClause = undefined
 
+parameterDeclarationList :: P [ParameterDeclaration]
 parameterDeclarationList = undefined
 
+data ParameterDeclaration = ParameterDeclaration
+
+parameterDeclaration :: P ParameterDeclaration
 parameterDeclaration = undefined
 
 -- dcl.fct.def.general
 -- function-definition:
---  	attribute-specifier-seqopt decl-specifier-seqopt declarator function-body     C++0x
---  	attribute-specifier-seqopt decl-specifier-seqopt declarator = default ;     C++0x
---  	attribute-specifier-seqopt decl-specifier-seqopt declarator = delete ;     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator function-body     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = default ;     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = delete ;     C++0x
 -- function-body:
---  	ctor-initializeropt compound-statement     C++0x
+--  	ctor-initializer[opt] compound-statement     C++0x
 --  	function-try-block     C++0x
 functionDefinition :: P Declaration
 functionDefinition = undefined
 
+data FunctionBody = FunctionBody
+
+functionBody :: P FunctionBody
 functionBody = undefined
 
 -- dcl.init
@@ -1060,14 +1171,29 @@ functionBody = undefined
 -- braced-init-list:
 --  	{ initializer-list ,opt }     C++0x
 --  	{ }     C++0x
+data Initializer = Initializer
+
+initializer :: P Initializer
 initializer = undefined
 
+data BraceOrEqualInitializer = BraceOrEqualInitializer
+
+braceOrEqualInitializer :: P BraceOrEqualInitializer
 braceOrEqualInitializer = undefined
 
+data InitializerClause = InitializerClause
+
+initializerClause :: P InitializerClause
 initializerClause = undefined
 
+data InitializerList = InitializerList
+
+initializerList :: P InitializerList
 initializerList = undefined
 
+data BracedInitList = BracedInitList
+
+bracedInitList :: P BracedInitList
 bracedInitList = undefined
 
 -- class
@@ -1075,12 +1201,12 @@ bracedInitList = undefined
 --  	identifier
 --  	simple-template-id     C++0x
 -- class-specifier:
---  	class-head { member-specificationopt }
+--  	class-head { member-specification[opt] }
 -- class-head:
---  	class-key attribute-specifier-seqopt class-head-name class-virt-specifier-seqopt base-clauseopt     C++0x
---  	class-key attribute-specifier-seqopt base-clauseopt     C++0x
+--  	class-key attribute-specifier-seq[opt] class-head-name class-virt-specifier-seq[opt] base-clause[opt]     C++0x
+--  	class-key attribute-specifier-seq[opt] base-clause[opt]     C++0x
 -- class-head-name:
---  	nested-name-specifieropt class-name     C++0x
+--  	nested-name-specifier[opt] class-name     C++0x
 -- class-virt-specifier-seq:
 --  	class-virt-specifier     C++0x
 --  	class-virt-specifier-seq class-virt-specifier     C++0x
@@ -1091,27 +1217,46 @@ bracedInitList = undefined
 --  	class
 --  	struct
 --  	union
+data ClassName = ClassName
+
+className :: P ClassName
 className = undefined
 
+data ClassSpecifier = ClassSpecifier
+
+classSpecifier :: P ClassSpecifier
 classSpecifier = undefined
 
+data ClassHead = ClassHead
+
+classHead :: P ClassHead
 classHead = undefined
 
+data ClassHeadName = ClassHeadName
+
+classHeadName :: P ClassHeadName
 classHeadName = undefined
 
+classVirtSpecifierSeq :: P [ClassVirtSpecifier]
 classVirtSpecifierSeq = undefined
 
+data ClassVirtSpecifier = ClassVirtSpecifier
+
+classVirtSpecifier :: P ClassVirtSpecifier
 classVirtSpecifier = undefined
 
+data ClassKey = ClassKey
+
+classKey :: P ClassKey
 classKey = undefined
 
 -- class.mem
 -- member-specification:
---  	member-declaration member-specificationopt
---  	access-specifier : member-specificationopt
+--  	member-declaration member-specification[opt]
+--  	access-specifier : member-specification[opt]
 -- member-declaration:
---  	attribute-specifier-seqopt decl-specifier-seqopt member-declarator-listopt ;     C++0x
---  	function-definition ;opt
+--  	attribute-specifier-seq[opt] decl-specifier-seq[opt] member-declarator-list[opt] ;     C++0x
+--  	function-definition ;[opt]
 --  	using-declaration
 --  	static_assert-declaration     C++0x
 --  	template-declaration
@@ -1120,9 +1265,9 @@ classKey = undefined
 --  	member-declarator
 --  	member-declarator-list , member-declarator
 -- member-declarator:
---  	declarator virt-specifier-seqopt pure-specifieropt
---  	declarator virt-specifier-seqopt brace-or-equal-initializeropt     C++0x
---  	identifieropt attribute-specifier-seqopt virt-specifier-seqopt : constant-expression
+--  	declarator virt-specifier-seq[opt] pure-specifier[opt]
+--  	declarator virt-specifier-seq[opt] brace-or-equal-initializer[opt]     C++0x
+--  	identifier[opt] attribute-specifier-seq[opt] virt-specifier-seq[opt] : constant-expression
 -- virt-specifier-seq:
 --  	virt-specifier
 --  	virt-specifier-seq virt-specifier
@@ -1132,18 +1277,35 @@ classKey = undefined
 --  	new
 -- pure-specifier:
 --  	= 0
+data MemberSpecification = MemberSpecification
+
+memberSpecification :: P MemberSpecification
 memberSpecification = undefined
 
+data MemberDeclaration = MemberDeclaration
+
+memberDeclaration :: P MemberDeclaration
 memberDeclaration = undefined
 
+memberDeclaratorList :: P [MemberDeclarator]
 memberDeclaratorList = undefined
 
+data MemberDeclarator = MemberDeclarator
+
+memberDeclarator :: P MemberDeclarator
 memberDeclarator = undefined
 
+virtSpecifierSeq :: P [VirtSpecifier]
 virtSpecifierSeq = undefined
 
+data VirtSpecifier = VirtSpecifier
+
+virtSpecifier :: P VirtSpecifier
 virtSpecifier = undefined
 
+data PureSpecifier = PureSpecifier
+
+pureSpecifier :: P PureSpecifier
 pureSpecifier = undefined
 
 -- class.derived
@@ -1153,11 +1315,11 @@ pureSpecifier = undefined
 --  	base-specifier ...opt     C++0x
 --  	base-specifier-list , base-specifier ...opt     C++0x
 -- base-specifier:
---  	attribute-specifier-seqopt base-type-specifier     C++0x
---  	attribute-specifier-seqopt virtual access-specifieropt base-type-specifier     C++0x
---  	attribute-specifier-seqopt access-specifier virtualopt base-type-specifier     C++0x
+--  	attribute-specifier-seq[opt] base-type-specifier     C++0x
+--  	attribute-specifier-seq[opt] virtual access-specifier[opt] base-type-specifier     C++0x
+--  	attribute-specifier-seq[opt] access-specifier virtual[opt] base-type-specifier     C++0x
 -- class-or-decltype:
---  	::opt nested-name-specifieropt class-name     C++0x
+--  	::opt nested-name-specifier[opt] class-name     C++0x
 --  	decltype-specifier     C++0x
 -- base-type-specifier:
 --  	class-or-decltype     C++0x
@@ -1165,29 +1327,56 @@ pureSpecifier = undefined
 --  	private
 --  	protected
 --  	public
+data BaseClause = BaseClause
+
+baseClause :: P BaseClause
 baseClause = undefined
 
+data BaseSpecifierList = BaseSpecifierList
+
+baseSpecifierList :: P BaseSpecifierList
 baseSpecifierList = undefined
 
+data BaseSpecifier = BaseSpecifier
+
+baseSpecifier :: P BaseSpecifier
 baseSpecifier = undefined
 
+data ClassOrDecltype = ClassOrDecltype
+
+classOrDecltype :: P ClassOrDecltype
 classOrDecltype = undefined
 
+data BaseTypeSpecifier = BaseTypeSpecifier
+
+baseTypeSpecifier :: P BaseTypeSpecifier
 baseTypeSpecifier = undefined
 
+data AccessSpecifier = AccessSpecifier
+
+accessSpecifier :: P AccessSpecifier
 accessSpecifier = undefined
 
 -- class.conv.fct
 -- conversion-function-id:
 --  	operator conversion-type-id
 -- conversion-type-id:
---  	type-specifier-seq conversion-declaratoropt
+--  	type-specifier-seq conversion-declarator[opt]
 -- conversion-declarator:
---  	ptr-operator conversion-declaratoropt
+--  	ptr-operator conversion-declarator[opt]
+data ConversionFunctionId = ConversionFunctionId
+
+conversionFunctionId :: P ConversionFunctionId
 conversionFunctionId = undefined
 
+data ConversionTypeId = ConversionTypeId
+
+conversionTypeId :: P ConversionTypeId
 conversionTypeId = undefined
 
+data ConversionDeclarator = ConversionDeclarator
+
+conversionDeclarator :: P ConversionDeclarator
 conversionDeclarator = undefined
 
 -- class.base.init
@@ -1202,12 +1391,24 @@ conversionDeclarator = undefined
 -- mem-initializer-id:
 --  	class-or-decltype
 --  	identifier
+data CtorInitializer = CtorInitializer
+
+ctorInitializer :: P CtorInitializer
 ctorInitializer = undefined
 
+data MemInitializerList = MemInitializerList
+
+memInitializerList :: P MemInitializerList
 memInitializerList = undefined
 
+data MemInitializer = MemInitializer
+
+memInitializer :: P MemInitializer
 memInitializer = undefined
 
+data MemInitializerId = MemInitializerId
+
+memInitializerId :: P MemInitializerId
 memInitializerId = undefined
 
 -- over.oper
@@ -1257,13 +1458,22 @@ memInitializerId = undefined
 --  	->
 --  	()
 --  	[]
+data OperatorFunctionId = OperatorFunctionId
+
+operatorFunctionId :: P OperatorFunctionId
 operatorFunctionId = undefined
 
+data OverloadableOperator = OverloadableOperator
+
+overloadableOperator :: P OverloadableOperator
 overloadableOperator = undefined
 
 -- over.literal
 -- literal-operator-id:
 --  	operator "" identifier     C++0x
+data LiteralOperatorId = LiteralOperatorId
+
+literalOperatorId :: P LiteralOperatorId
 literalOperatorId = undefined
 
 -- temp
@@ -1275,6 +1485,7 @@ literalOperatorId = undefined
 templateDeclaration :: P Declaration
 templateDeclaration = undefined
 
+templateParameterList :: P [TemplateParameter]
 templateParameterList = undefined
 
 -- temp.param
@@ -1288,8 +1499,14 @@ templateParameterList = undefined
 --  	typename identifier[opt] = type-id
 --  	template < template-parameter-list > class ...opt identifier[opt]     C++0x
 --  	template < template-parameter-list > class identifier[opt] = id-expression
+data TemplateParameter = TemplateParameter
+
+templateParameter :: P TemplateParameter
 templateParameter = undefined
 
+data TypeParameter = TypeParameter
+
+typeParameter :: P TypeParameter
 typeParameter = undefined
 
 -- temp.names
@@ -1308,20 +1525,38 @@ typeParameter = undefined
 --  	constant-expression     C++0x
 --  	type-id     C++0x
 --  	id-expression     C++0x
+data SimpleTemplateId = SimpleTemplateId
+
+simpleTemplateId :: P SimpleTemplateId
 simpleTemplateId = undefined
 
+data TemplateId = TemplateId
+
+templateId :: P TemplateId
 templateId = undefined
 
+data TemplateName = TemplateName
+
+templateName :: P TemplateName
 templateName = undefined
 
+data TemplateArgumentList = TemplateArgumentList
+
+templateArgumentList :: P TemplateArgumentList
 templateArgumentList = undefined
 
+data TemplateArgument = TemplateArgument
+
+templateArgument :: P TemplateArgument
 templateArgument = undefined
 
 -- temp.res
 -- typename-specifier:
 --  	typename ::opt nested-name-specifier identifier     C++0x
 --  	typename ::opt nested-name-specifier template[opt] simple-template-id     C++0x
+data TypenameSpecifier = TypenameSpecifier
+
+typenameSpecifier :: P TypenameSpecifier
 typenameSpecifier = undefined
 
 -- temp.explicit
@@ -1352,16 +1587,30 @@ explicitSpecialization = undefined
 --  	...     C++0x
 -- throw-expression:
 --  	throw assignment-expression[opt]
+data TryBlock = TryBlock
+
+tryBlock :: P TryBlock
 tryBlock = undefined
 
+data FunctionTryBlock = FunctionTryBlock
+
+functionTryBlock :: P FunctionTryBlock
 functionTryBlock = undefined
 
+handlerSeq :: P [Handler]
 handlerSeq = undefined
 
+data Handler = Handler
+
+handler :: P Handler
 handler = undefined
 
+data ExceptionDeclaration = ExceptionDeclaration
+
+exceptionDeclaration :: P ExceptionDeclaration
 exceptionDeclaration = undefined
 
+throwExpression :: P Expression
 throwExpression = undefined
 
 -- except.spec
@@ -1376,10 +1625,22 @@ throwExpression = undefined
 -- noexcept-specification:
 --  	noexcept ( constant-expression )     C++0x
 --  	noexcept     C++0x
+data ExceptionSpecification = ExceptionSpecification
+
+exceptionSpecification :: P ExceptionSpecification
 exceptionSpecification = undefined
 
+data DynamicExceptionSpecification = DynamicExceptionSpecification
+
+dynamicExceptionSpecification :: P DynamicExceptionSpecification
 dynamicExceptionSpecification = undefined
 
+data TypeIdList = TypeIdList
+
+typeIdList :: P TypeIdList
 typeIdList = undefined
 
+data NoexceptSpecification = NoexceptSpecification
+
+noexceptSpecification :: P NoexceptSpecification
 noexceptSpecification = undefined
