@@ -6,6 +6,36 @@ import           Language.CPlusPlus.Token
 
 import           Text.Parsec
 
+data Literal = Literal
+  { _literalPos   :: SourcePos
+  , _literalValue :: String
+  }
+
+data Id = Id
+  { _idPos   :: SourcePos
+  , _idValue :: String
+  }
+
+identifier :: P Id
+identifier = do
+  pos <- getPosition
+  s <- ident
+  return $ Id pos s
+
+literal :: P Literal
+literal = do
+  pos <- getPosition
+  s <- choice
+           [ integerLiteral
+           , characterLiteral
+           , floatingLiteral
+           , stringLiteral
+           , booleanLiteral
+           , pointerLiteral
+           , userDefinedLiteral
+           ]
+  return $ Literal pos s
+
 -- Hyperlinked C++ BNF Grammar
 -- By Alessio Marchetti
 --
@@ -54,10 +84,6 @@ translationUnit = do
 --  	decltype-specifier ::     C++0x
 --  	nested-name-specifier identifier ::
 --  	nested-name-specifier template[opt] simple-template-id ::
-type Literal = String
-
-type Id = String
-
 data Expression
   = LiteralExpression { _literalExpressionPos   :: SourcePos
                       , _literalExpressionValue :: Literal }
@@ -66,7 +92,10 @@ data Expression
                        , _parensedExpressionValue :: Expression }
   | IdExpression { _idExpressionPos   :: SourcePos
                  , _idExpressionValue :: Either UnqualifiedId QualifiedId }
-  | LambdaExpression { _lambdaExpressionPos :: SourcePos }
+  | LambdaExpression { _lambdaExpressionPos        :: SourcePos
+                     , _lambdaExpressionIntroducer :: LambdaIntroducer
+                     , _lambdaExpressionDeclarator :: Maybe LambdaDeclarator
+                     , _lambdaExpressionStatement  :: Statement }
 
 primaryExpression :: P Expression
 primaryExpression =
@@ -127,6 +156,10 @@ nestedNameSpecifier = undefined
 lambdaExpression :: P Expression
 lambdaExpression = undefined
 
+data LambdaIntroducer =
+  LambdaIntroducer
+
+lambdaIntroducer :: P LambdaIntroducer
 lambdaIntroducer = undefined
 
 data LambdaCapture =
@@ -135,6 +168,10 @@ data LambdaCapture =
 lambdaCapture :: P LambdaCapture
 lambdaCapture = undefined
 
+data CaptureDefault =
+  CaptureDefault
+
+captureDefault :: P CaptureDefault
 captureDefault = undefined
 
 data CaptureList = CaptureList
@@ -193,8 +230,10 @@ postfixExpression = undefined
 expressionList :: P [Expression]
 expressionList = undefined
 
-data PseudoDestructorName = PseudoDestructorName
+data PseudoDestructorName =
+  PseudoDestructorName
 
+pseudoDestructorName :: P PseudoDestructorName
 pseudoDestructorName = undefined
 
 -- expr.unary
@@ -253,22 +292,26 @@ newExpression = undefined
 newPlacement :: P [Expression]
 newPlacement = undefined
 
-data NewTypeId = NewTypeId
+data NewTypeId =
+  NewTypeId
 
 newTypeId :: P NewTypeId
 newTypeId = undefined
 
-data NewDeclarator = NewDeclarator
+data NewDeclarator =
+  NewDeclarator
 
 newDeclarator :: P NewDeclarator
 newDeclarator = undefined
 
-data NoptrNewDeclarator = NoptrNewDeclarator
+data NoptrNewDeclarator =
+  NoptrNewDeclarator
 
 noptrNewDeclarator :: P NoptrNewDeclarator
 noptrNewDeclarator = undefined
 
-data NewInitializer = NewInitializer
+data NewInitializer =
+  NewInitializer
 
 newInitializer :: P NewInitializer
 newInitializer = undefined
@@ -406,7 +449,8 @@ conditionalExpression = undefined
 assignmentExpression :: P Expression
 assignmentExpression = undefined
 
-data AssignmentOperator = AssignmentOperator
+data AssignmentOperator =
+  AssignmentOperator
 
 assignmentOperator :: P AssignmentOperator
 assignmentOperator = undefined
@@ -500,17 +544,20 @@ condition = undefined
 iterationStatement :: P Statement
 iterationStatement = undefined
 
-data ForInitStatement = ForInitStatement
+data ForInitStatement =
+  ForInitStatement
 
 forInitStatement :: P ForInitStatement
 forInitStatement = undefined
 
-data ForRangeDeclaration = ForRangeDeclaration
+data ForRangeDeclaration =
+  ForRangeDeclaration
 
 forRangeDeclaration :: P ForRangeDeclaration
 forRangeDeclaration = undefined
 
-data ForRangeInitializer = ForRangeInitializer
+data ForRangeInitializer =
+  ForRangeInitializer
 
 forRangeInitializer :: P ForRangeInitializer
 forRangeInitializer = undefined
@@ -519,8 +566,8 @@ forRangeInitializer = undefined
 -- jump-statement:
 --  	break ;
 --  	continue ;
---  	return expressionopt ;
---  	return braced-init-listopt ;     C++0x
+--  	return expression[opt] ;
+--  	return braced-init-list[opt] ;     C++0x
 --  	goto identifier ;
 jumpStatement :: P Statement
 jumpStatement = undefined
@@ -639,7 +686,8 @@ functionSpecifier = undefined
 -- dcl.typedef
 -- typedef-name:
 --  	identifier
-data TypedefName = TypedefName
+data TypedefName =
+  TypedefName
 
 typedefName :: P TypedefName
 typedefName = undefined
@@ -666,17 +714,20 @@ data TypeSpecifier =
 typeSpecifier :: P TypeSpecifier
 typeSpecifier = undefined
 
-data TrailingTypeSpecifier = TrailingTypeSpecifier
+data TrailingTypeSpecifier =
+  TrailingTypeSpecifier
 
 trailingTypeSpecifier :: P TrailingTypeSpecifier
 trailingTypeSpecifier = undefined
 
-data TypeSpecifierSeq = TypeSpecifierSeq
+data TypeSpecifierSeq =
+  TypeSpecifierSeq
 
 typeSpecifierSeq :: P TypeSpecifierSeq
 typeSpecifierSeq = undefined
 
-data TrailingTypeSpecifierSeq = TrailingTypeSpecifierSeq
+data TrailingTypeSpecifierSeq =
+  TrailingTypeSpecifierSeq
 
 trailingTypeSpecifierSeq :: P TrailingTypeSpecifierSeq
 trailingTypeSpecifierSeq = undefined
@@ -707,17 +758,20 @@ trailingTypeSpecifierSeq = undefined
 --  	simple-template-id     C++0x
 -- decltype-specifier:
 --  	decltype ( expression )     C++0x
-data SimpleTypeSpecifier = SimpleTypeSpecifier
+data SimpleTypeSpecifier =
+  SimpleTypeSpecifier
 
 simpleTypeSpecifier :: P SimpleTypeSpecifier
 simpleTypeSpecifier = undefined
 
-data TypeName = TypeName
+data TypeName =
+  TypeName
 
 typeName :: P TypeName
 typeName = undefined
 
-data DecltypeSpecifier = DecltypeSpecifier
+data DecltypeSpecifier =
+  DecltypeSpecifier
 
 decltypeSpecifier :: P DecltypeSpecifier
 decltypeSpecifier = undefined
@@ -727,7 +781,8 @@ decltypeSpecifier = undefined
 --  	class-key attribute-specifier-seq[opt] ::opt nested-name-specifier[opt] identifier
 --  	class-key ::opt nested-name-specifier[opt] template[opt] simple-template-id
 --  	enum ::opt nested-name-specifier[opt] identifier
-data ElaboratedTypeSpecifier = ElaboratedTypeSpecifier
+data ElaboratedTypeSpecifier =
+  ElaboratedTypeSpecifier
 
 elaboratedTypeSpecifier :: P ElaboratedTypeSpecifier
 elaboratedTypeSpecifier = undefined
@@ -757,17 +812,20 @@ elaboratedTypeSpecifier = undefined
 --  	enumerator = constant-expression
 -- enumerator:
 --  	identifier
-data EnumName = EnumName
+data EnumName =
+  EnumName
 
 enumName :: P EnumName
 enumName = undefined
 
-data EnumSpecifier = EnumSpecifier
+data EnumSpecifier =
+  EnumSpecifier
 
 enumSpecifier :: P EnumSpecifier
 enumSpecifier = undefined
 
-data EnumHead = EnumHead
+data EnumHead =
+  EnumHead
 
 enumHead :: P EnumHead
 enumHead = undefined
@@ -775,13 +833,19 @@ enumHead = undefined
 opaqueEnumDeclaration :: P Declaration
 opaqueEnumDeclaration = undefined
 
-data EnumKeyType = Enum | EnumClass | EnumStruct
-data EnumKey = EnumKey
+data EnumKeyType
+  = Enum
+  | EnumClass
+  | EnumStruct
+
+data EnumKey =
+  EnumKey
 
 enumKey :: P EnumKey
 enumKey = undefined
 
-data EnumBase = EnumBase
+data EnumBase =
+  EnumBase
 
 enumBase :: P EnumBase
 enumBase = undefined
@@ -789,12 +853,14 @@ enumBase = undefined
 enumeratorList :: P [EnumeratorDefinition]
 enumeratorList = undefined
 
-data EnumeratorDefinition = EnumeratorDefinition
+data EnumeratorDefinition =
+  EnumeratorDefinition
 
 enumeratorDefinition :: P EnumeratorDefinition
 enumeratorDefinition = undefined
 
-data Enumerator = Enumerator
+data Enumerator =
+  Enumerator
 
 enumerator :: P Enumerator
 enumerator = undefined
@@ -819,12 +885,14 @@ enumerator = undefined
 --  	inline[opt] namespace { namespace-body }
 -- namespace-body:
 --  	declaration-seq[opt]
-data NamespaceName = NamespaceName
+data NamespaceName =
+  NamespaceName
 
 namespaceName :: P NamespaceName
 namespaceName = undefined
 
-data OriginalNamespaceName = OriginalNamespaceName
+data OriginalNamespaceName =
+  OriginalNamespaceName
 
 originalNamespaceName :: P OriginalNamespaceName
 originalNamespaceName = undefined
@@ -832,22 +900,26 @@ originalNamespaceName = undefined
 namespaceDefinition :: P Declaration
 namespaceDefinition = undefined
 
-data NamedNamespaceDefinition = NamedNamespaceDefinition
+data NamedNamespaceDefinition =
+  NamedNamespaceDefinition
 
 namedNamespaceDefinition :: P NamedNamespaceDefinition
 namedNamespaceDefinition = undefined
 
-data OriginalNamespaceDefinition = OriginalNamespaceDefinition
+data OriginalNamespaceDefinition =
+  OriginalNamespaceDefinition
 
 originalNamespaceDefinition :: P OriginalNamespaceDefinition
 originalNamespaceDefinition = undefined
 
-data ExtensionNamespaceDefinition = ExtensionNamespaceDefinition
+data ExtensionNamespaceDefinition =
+  ExtensionNamespaceDefinition
 
 extensionNamespaceDefinition :: P ExtensionNamespaceDefinition
 extensionNamespaceDefinition = undefined
 
-data UnnamedNamespaceDefinition = UnnamedNamespaceDefinition
+data UnnamedNamespaceDefinition =
+  UnnamedNamespaceDefinition
 
 unnamedNamespaceDefinition :: P UnnamedNamespaceDefinition
 unnamedNamespaceDefinition = undefined
@@ -862,7 +934,8 @@ namespaceBody = undefined
 --  	namespace identifier = qualified-namespace-specifier ;
 -- qualified-namespace-specifier:
 --  	::opt nested-name-specifier[opt] namespace-name
-data NamespaceAlias = NamespaceAlias
+data NamespaceAlias =
+  NamespaceAlias
 
 namespaceAlias :: P NamespaceAlias
 namespaceAlias = undefined
@@ -870,7 +943,8 @@ namespaceAlias = undefined
 namespaceAliasDefinition :: P Declaration
 namespaceAliasDefinition = undefined
 
-data QualifiedNamespaceSpecifier = QualifiedNamespaceSpecifier
+data QualifiedNamespaceSpecifier =
+  QualifiedNamespaceSpecifier
 
 qualifiedNamespaceSpecifier :: P QualifiedNamespaceSpecifier
 qualifiedNamespaceSpecifier = undefined
@@ -938,42 +1012,50 @@ linkageSpecification = undefined
 attributeSpecifierSeq :: P [AttributeSpecifier]
 attributeSpecifierSeq = undefined
 
-data AttributeSpecifier = AttributeSpecifier
+data AttributeSpecifier =
+  AttributeSpecifier
 
 attributeSpecifier :: P AttributeSpecifier
 attributeSpecifier = undefined
 
-data AlignmentSpecifier = AlignmentSpecifier
+data AlignmentSpecifier =
+  AlignmentSpecifier
 
 alignmentSpecifier :: P AlignmentSpecifier
 alignmentSpecifier = undefined
 
-data AttributeList = AttributeList
+data AttributeList =
+  AttributeList
 
 attributeList :: P AttributeList
 attributeList = undefined
 
-data Attribute = Attribute
+data Attribute =
+  Attribute
 
 attribute :: P Attribute
 attribute = undefined
 
-data AttributeToken = AttributeToken
+data AttributeToken =
+  AttributeToken
 
 attributeToken :: P AttributeToken
 attributeToken = undefined
 
-data AttributeScopedToken = AttributeScopedToken
+data AttributeScopedToken =
+  AttributeScopedToken
 
 attributeScopedToken :: P AttributeScopedToken
 attributeScopedToken = undefined
 
-data AttributeNamespace = AttributeNamespace
+data AttributeNamespace =
+  AttributeNamespace
 
 attributeNamespace :: P AttributeNamespace
 attributeNamespace = undefined
 
-data AttributeArgumentClause = AttributeArgumentClause
+data AttributeArgumentClause =
+  AttributeArgumentClause
 
 attributeArgumentClause :: P AttributeArgumentClause
 attributeArgumentClause = undefined
@@ -981,7 +1063,8 @@ attributeArgumentClause = undefined
 balancedTokenSeq :: P [BalancedToken]
 balancedTokenSeq = undefined
 
-data BalancedToken = BalancedToken
+data BalancedToken =
+  BalancedToken
 
 balancedToken :: P BalancedToken
 balancedToken = undefined
@@ -1027,37 +1110,44 @@ balancedToken = undefined
 initDeclaratorList :: P [InitDeclarator]
 initDeclaratorList = undefined
 
-data InitDeclarator = InitDeclarator
+data InitDeclarator =
+  InitDeclarator
 
 initDeclarator :: P InitDeclarator
 initDeclarator = undefined
 
-data Declarator = Declarator
+data Declarator =
+  Declarator
 
 declarator :: P Declarator
 declarator = undefined
 
-data PtrDeclarator = PtrDeclarator
+data PtrDeclarator =
+  PtrDeclarator
 
 ptrDeclarator :: P PtrDeclarator
 ptrDeclarator = undefined
 
-data NoptrDeclarator = NoptrDeclarator
+data NoptrDeclarator =
+  NoptrDeclarator
 
 noptrDeclarator :: P NoptrDeclarator
 noptrDeclarator = undefined
 
-data ParametersAndQualifiers = ParametersAndQualifiers
+data ParametersAndQualifiers =
+  ParametersAndQualifiers
 
 parametersAndQualifiers :: P ParametersAndQualifiers
 parametersAndQualifiers = undefined
 
-data TrailingReturnType = TrailingReturnType
+data TrailingReturnType =
+  TrailingReturnType
 
 trailingReturnType :: P TrailingReturnType
 trailingReturnType = undefined
 
-data PtrOperator = PtrOperator
+data PtrOperator =
+  PtrOperator
 
 ptrOperator :: P PtrOperator
 ptrOperator = undefined
@@ -1065,17 +1155,20 @@ ptrOperator = undefined
 cvQualifierSeq :: P [CvQualifier]
 cvQualifierSeq = undefined
 
-data CvQualifier = CvQualifier
+data CvQualifier =
+  CvQualifier
 
 cvQualifier :: P CvQualifier
 cvQualifier = undefined
 
-data RefQualifier = RefQualifier
+data RefQualifier =
+  RefQualifier
 
 refQualifier :: P RefQualifier
 refQualifier = undefined
 
-data DeclaratorId = DeclaratorId
+data DeclaratorId =
+  DeclaratorId
 
 declaratorId :: P DeclaratorId
 declaratorId = undefined
@@ -1094,22 +1187,26 @@ declaratorId = undefined
 --  	noptr-abstract-declarator[opt] parameters-and-qualifiers     C++0x
 --  	noptr-abstract-declarator[opt] [ constant-expression ] attribute-specifier-seq[opt]     C++0x
 --  	( ptr-abstract-declarator )     C++0x
-data TypeId = TypeId
+data TypeId =
+  TypeId
 
 typeId :: P TypeId
 typeId = undefined
 
-data AbstractDeclarator = AbstractDeclarator
+data AbstractDeclarator =
+  AbstractDeclarator
 
 abstractDeclarator :: P AbstractDeclarator
 abstractDeclarator = undefined
 
-data PtrAbstractDeclarator = PtrAbstractDeclarator
+data PtrAbstractDeclarator =
+  PtrAbstractDeclarator
 
 ptrAbstractDeclarator :: P PtrAbstractDeclarator
 ptrAbstractDeclarator = undefined
 
-data NoptrAbstractDeclarator = NoptrAbstractDeclarator
+data NoptrAbstractDeclarator =
+  NoptrAbstractDeclarator
 
 noptrAbstractDeclarator :: P NoptrAbstractDeclarator
 noptrAbstractDeclarator = undefined
@@ -1126,7 +1223,8 @@ noptrAbstractDeclarator = undefined
 --  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
 --  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt]     C++0x
 --  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt] = initializer-clause     C++0x
-data ParameterDeclarationClause = ParameterDeclarationClause
+data ParameterDeclarationClause =
+  ParameterDeclarationClause
 
 parameterDeclarationClause :: P ParameterDeclarationClause
 parameterDeclarationClause = undefined
@@ -1134,7 +1232,8 @@ parameterDeclarationClause = undefined
 parameterDeclarationList :: P [ParameterDeclaration]
 parameterDeclarationList = undefined
 
-data ParameterDeclaration = ParameterDeclaration
+data ParameterDeclaration =
+  ParameterDeclaration
 
 parameterDeclaration :: P ParameterDeclaration
 parameterDeclaration = undefined
@@ -1150,7 +1249,8 @@ parameterDeclaration = undefined
 functionDefinition :: P Declaration
 functionDefinition = undefined
 
-data FunctionBody = FunctionBody
+data FunctionBody =
+  FunctionBody
 
 functionBody :: P FunctionBody
 functionBody = undefined
@@ -1171,27 +1271,32 @@ functionBody = undefined
 -- braced-init-list:
 --  	{ initializer-list ,opt }     C++0x
 --  	{ }     C++0x
-data Initializer = Initializer
+data Initializer =
+  Initializer
 
 initializer :: P Initializer
 initializer = undefined
 
-data BraceOrEqualInitializer = BraceOrEqualInitializer
+data BraceOrEqualInitializer =
+  BraceOrEqualInitializer
 
 braceOrEqualInitializer :: P BraceOrEqualInitializer
 braceOrEqualInitializer = undefined
 
-data InitializerClause = InitializerClause
+data InitializerClause =
+  InitializerClause
 
 initializerClause :: P InitializerClause
 initializerClause = undefined
 
-data InitializerList = InitializerList
+data InitializerList =
+  InitializerList
 
 initializerList :: P InitializerList
 initializerList = undefined
 
-data BracedInitList = BracedInitList
+data BracedInitList =
+  BracedInitList
 
 bracedInitList :: P BracedInitList
 bracedInitList = undefined
@@ -1217,22 +1322,26 @@ bracedInitList = undefined
 --  	class
 --  	struct
 --  	union
-data ClassName = ClassName
+data ClassName =
+  ClassName
 
 className :: P ClassName
 className = undefined
 
-data ClassSpecifier = ClassSpecifier
+data ClassSpecifier =
+  ClassSpecifier
 
 classSpecifier :: P ClassSpecifier
 classSpecifier = undefined
 
-data ClassHead = ClassHead
+data ClassHead =
+  ClassHead
 
 classHead :: P ClassHead
 classHead = undefined
 
-data ClassHeadName = ClassHeadName
+data ClassHeadName =
+  ClassHeadName
 
 classHeadName :: P ClassHeadName
 classHeadName = undefined
@@ -1240,12 +1349,14 @@ classHeadName = undefined
 classVirtSpecifierSeq :: P [ClassVirtSpecifier]
 classVirtSpecifierSeq = undefined
 
-data ClassVirtSpecifier = ClassVirtSpecifier
+data ClassVirtSpecifier =
+  ClassVirtSpecifier
 
 classVirtSpecifier :: P ClassVirtSpecifier
 classVirtSpecifier = undefined
 
-data ClassKey = ClassKey
+data ClassKey =
+  ClassKey
 
 classKey :: P ClassKey
 classKey = undefined
@@ -1277,12 +1388,14 @@ classKey = undefined
 --  	new
 -- pure-specifier:
 --  	= 0
-data MemberSpecification = MemberSpecification
+data MemberSpecification =
+  MemberSpecification
 
 memberSpecification :: P MemberSpecification
 memberSpecification = undefined
 
-data MemberDeclaration = MemberDeclaration
+data MemberDeclaration =
+  MemberDeclaration
 
 memberDeclaration :: P MemberDeclaration
 memberDeclaration = undefined
@@ -1290,7 +1403,8 @@ memberDeclaration = undefined
 memberDeclaratorList :: P [MemberDeclarator]
 memberDeclaratorList = undefined
 
-data MemberDeclarator = MemberDeclarator
+data MemberDeclarator =
+  MemberDeclarator
 
 memberDeclarator :: P MemberDeclarator
 memberDeclarator = undefined
@@ -1298,12 +1412,14 @@ memberDeclarator = undefined
 virtSpecifierSeq :: P [VirtSpecifier]
 virtSpecifierSeq = undefined
 
-data VirtSpecifier = VirtSpecifier
+data VirtSpecifier =
+  VirtSpecifier
 
 virtSpecifier :: P VirtSpecifier
 virtSpecifier = undefined
 
-data PureSpecifier = PureSpecifier
+data PureSpecifier =
+  PureSpecifier
 
 pureSpecifier :: P PureSpecifier
 pureSpecifier = undefined
@@ -1327,32 +1443,38 @@ pureSpecifier = undefined
 --  	private
 --  	protected
 --  	public
-data BaseClause = BaseClause
+data BaseClause =
+  BaseClause
 
 baseClause :: P BaseClause
 baseClause = undefined
 
-data BaseSpecifierList = BaseSpecifierList
+data BaseSpecifierList =
+  BaseSpecifierList
 
 baseSpecifierList :: P BaseSpecifierList
 baseSpecifierList = undefined
 
-data BaseSpecifier = BaseSpecifier
+data BaseSpecifier =
+  BaseSpecifier
 
 baseSpecifier :: P BaseSpecifier
 baseSpecifier = undefined
 
-data ClassOrDecltype = ClassOrDecltype
+data ClassOrDecltype =
+  ClassOrDecltype
 
 classOrDecltype :: P ClassOrDecltype
 classOrDecltype = undefined
 
-data BaseTypeSpecifier = BaseTypeSpecifier
+data BaseTypeSpecifier =
+  BaseTypeSpecifier
 
 baseTypeSpecifier :: P BaseTypeSpecifier
 baseTypeSpecifier = undefined
 
-data AccessSpecifier = AccessSpecifier
+data AccessSpecifier =
+  AccessSpecifier
 
 accessSpecifier :: P AccessSpecifier
 accessSpecifier = undefined
@@ -1364,17 +1486,20 @@ accessSpecifier = undefined
 --  	type-specifier-seq conversion-declarator[opt]
 -- conversion-declarator:
 --  	ptr-operator conversion-declarator[opt]
-data ConversionFunctionId = ConversionFunctionId
+data ConversionFunctionId =
+  ConversionFunctionId
 
 conversionFunctionId :: P ConversionFunctionId
 conversionFunctionId = undefined
 
-data ConversionTypeId = ConversionTypeId
+data ConversionTypeId =
+  ConversionTypeId
 
 conversionTypeId :: P ConversionTypeId
 conversionTypeId = undefined
 
-data ConversionDeclarator = ConversionDeclarator
+data ConversionDeclarator =
+  ConversionDeclarator
 
 conversionDeclarator :: P ConversionDeclarator
 conversionDeclarator = undefined
@@ -1391,22 +1516,26 @@ conversionDeclarator = undefined
 -- mem-initializer-id:
 --  	class-or-decltype
 --  	identifier
-data CtorInitializer = CtorInitializer
+data CtorInitializer =
+  CtorInitializer
 
 ctorInitializer :: P CtorInitializer
 ctorInitializer = undefined
 
-data MemInitializerList = MemInitializerList
+data MemInitializerList =
+  MemInitializerList
 
 memInitializerList :: P MemInitializerList
 memInitializerList = undefined
 
-data MemInitializer = MemInitializer
+data MemInitializer =
+  MemInitializer
 
 memInitializer :: P MemInitializer
 memInitializer = undefined
 
-data MemInitializerId = MemInitializerId
+data MemInitializerId =
+  MemInitializerId
 
 memInitializerId :: P MemInitializerId
 memInitializerId = undefined
@@ -1458,12 +1587,14 @@ memInitializerId = undefined
 --  	->
 --  	()
 --  	[]
-data OperatorFunctionId = OperatorFunctionId
+data OperatorFunctionId =
+  OperatorFunctionId
 
 operatorFunctionId :: P OperatorFunctionId
 operatorFunctionId = undefined
 
-data OverloadableOperator = OverloadableOperator
+data OverloadableOperator =
+  OverloadableOperator
 
 overloadableOperator :: P OverloadableOperator
 overloadableOperator = undefined
@@ -1471,7 +1602,8 @@ overloadableOperator = undefined
 -- over.literal
 -- literal-operator-id:
 --  	operator "" identifier     C++0x
-data LiteralOperatorId = LiteralOperatorId
+data LiteralOperatorId =
+  LiteralOperatorId
 
 literalOperatorId :: P LiteralOperatorId
 literalOperatorId = undefined
@@ -1499,12 +1631,14 @@ templateParameterList = undefined
 --  	typename identifier[opt] = type-id
 --  	template < template-parameter-list > class ...opt identifier[opt]     C++0x
 --  	template < template-parameter-list > class identifier[opt] = id-expression
-data TemplateParameter = TemplateParameter
+data TemplateParameter =
+  TemplateParameter
 
 templateParameter :: P TemplateParameter
 templateParameter = undefined
 
-data TypeParameter = TypeParameter
+data TypeParameter =
+  TypeParameter
 
 typeParameter :: P TypeParameter
 typeParameter = undefined
@@ -1525,27 +1659,32 @@ typeParameter = undefined
 --  	constant-expression     C++0x
 --  	type-id     C++0x
 --  	id-expression     C++0x
-data SimpleTemplateId = SimpleTemplateId
+data SimpleTemplateId =
+  SimpleTemplateId
 
 simpleTemplateId :: P SimpleTemplateId
 simpleTemplateId = undefined
 
-data TemplateId = TemplateId
+data TemplateId =
+  TemplateId
 
 templateId :: P TemplateId
 templateId = undefined
 
-data TemplateName = TemplateName
+data TemplateName =
+  TemplateName
 
 templateName :: P TemplateName
 templateName = undefined
 
-data TemplateArgumentList = TemplateArgumentList
+data TemplateArgumentList =
+  TemplateArgumentList
 
 templateArgumentList :: P TemplateArgumentList
 templateArgumentList = undefined
 
-data TemplateArgument = TemplateArgument
+data TemplateArgument =
+  TemplateArgument
 
 templateArgument :: P TemplateArgument
 templateArgument = undefined
@@ -1554,7 +1693,8 @@ templateArgument = undefined
 -- typename-specifier:
 --  	typename ::opt nested-name-specifier identifier     C++0x
 --  	typename ::opt nested-name-specifier template[opt] simple-template-id     C++0x
-data TypenameSpecifier = TypenameSpecifier
+data TypenameSpecifier =
+  TypenameSpecifier
 
 typenameSpecifier :: P TypenameSpecifier
 typenameSpecifier = undefined
@@ -1587,12 +1727,14 @@ explicitSpecialization = undefined
 --  	...     C++0x
 -- throw-expression:
 --  	throw assignment-expression[opt]
-data TryBlock = TryBlock
+data TryBlock =
+  TryBlock
 
 tryBlock :: P TryBlock
 tryBlock = undefined
 
-data FunctionTryBlock = FunctionTryBlock
+data FunctionTryBlock =
+  FunctionTryBlock
 
 functionTryBlock :: P FunctionTryBlock
 functionTryBlock = undefined
@@ -1600,12 +1742,14 @@ functionTryBlock = undefined
 handlerSeq :: P [Handler]
 handlerSeq = undefined
 
-data Handler = Handler
+data Handler =
+  Handler
 
 handler :: P Handler
 handler = undefined
 
-data ExceptionDeclaration = ExceptionDeclaration
+data ExceptionDeclaration =
+  ExceptionDeclaration
 
 exceptionDeclaration :: P ExceptionDeclaration
 exceptionDeclaration = undefined
@@ -1625,22 +1769,26 @@ throwExpression = undefined
 -- noexcept-specification:
 --  	noexcept ( constant-expression )     C++0x
 --  	noexcept     C++0x
-data ExceptionSpecification = ExceptionSpecification
+data ExceptionSpecification =
+  ExceptionSpecification
 
 exceptionSpecification :: P ExceptionSpecification
 exceptionSpecification = undefined
 
-data DynamicExceptionSpecification = DynamicExceptionSpecification
+data DynamicExceptionSpecification =
+  DynamicExceptionSpecification
 
 dynamicExceptionSpecification :: P DynamicExceptionSpecification
 dynamicExceptionSpecification = undefined
 
-data TypeIdList = TypeIdList
+data TypeIdList =
+  TypeIdList
 
 typeIdList :: P TypeIdList
 typeIdList = undefined
 
-data NoexceptSpecification = NoexceptSpecification
+data NoexceptSpecification =
+  NoexceptSpecification
 
 noexceptSpecification :: P NoexceptSpecification
 noexceptSpecification = undefined

@@ -3,25 +3,7 @@ module Language.CPlusPlus.Base where
 import Language.CPlusPlus.AST
 import Language.CPlusPlus.Token
 
-import Text.Parsec (between, choice, getPosition)
-
-identifier :: P Name
-identifier = do
-  pos <- getPosition
-  s <- ident
-  return $ Id pos s
-
-literal =
-  choice
-    [ integerLiteral
-    , characterLiteral
-    , floatingLiteral
-    , stringLiteral
-    , booleanLiteral
-    , pointerLiteral
-    , userDefinedLiteral
-    ]
-
+import Text.Parsec (between)
 
 angles :: P a -> P a
 angles = between (opLess) (opGreater)
