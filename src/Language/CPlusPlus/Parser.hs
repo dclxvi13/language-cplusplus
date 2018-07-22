@@ -92,6 +92,7 @@ translationUnit = do
 --  	nested-name-specifier identifier ::
 --  	nested-name-specifier template[opt] simple-template-id ::
 data Expression
+  -- primary expression
   = LiteralExpression { _literalExpressionPos   :: SourcePos
                       , _literalExpressionValue :: Literal }
   | ThisExpression { _thisExpressionPos :: SourcePos }
@@ -103,6 +104,14 @@ data Expression
                      , _lambdaExpressionIntroducer :: LambdaIntroducer
                      , _lambdaExpressionDeclarator :: Maybe LambdaDeclarator
                      , _lambdaExpressionStatement  :: Statement }
+  -- postfix expression
+  -- unary expression
+  -- new expression
+  -- delete expression
+  -- noexcept expression
+  -- cast expression
+  -- binary expression
+  -- conditional expression
   deriving (Show, Eq)
 
 primaryExpression :: P Expression
@@ -122,12 +131,36 @@ primaryExpression =
 idExpression :: P Expression
 idExpression = undefined
 
-data UnqualifiedId =
-  UnqualifiedId
+data UnqualifiedId
+  = UnqualifiedIdIdentifier { _unqualifiedIdIdentifierPos   :: SourcePos
+                            , _unqualifiedIdIdentifierValue :: Id }
+  | UnqualifiedIdOperatorFunctionId { _unqualifiedIdOperatorFunctionIdPos   :: SourcePos
+                                    , _unqualifiedIdOperatorFunctionIdValue :: OperatorFunctionId }
+  | UnqualifiedIdConversionFunctionId { _unqualifiedIdConversionFunctionIdPos   :: SourcePos
+                                      , _unqualifiedIdConversionFunctionIdValue :: ConversionFunctionId }
+  | UnqualifiedIdLiteralOperatorId { _unqualifiedIdLiteralOperatorIdPos   :: SourcePos
+                                   , _unqualifiedIdLiteralOperatorIdValue :: LiteralOperatorId }
+  | UnqualifiedIdDestructorClass { _unqualifiedIdDestructorClassPos   :: SourcePos
+                                 , _unqualifiedIdDestructorClassValue :: ClassName }
+  | UnqualifiedIdDestructorDecltype { _unqualifiedIdDestructorDecltypePos   :: SourcePos
+                                    , _unqualifiedIdDestructorDecltypeValue :: DecltypeSpecifier }
+  | UnqualifiedIdTemplateId { _unqualifiedIdTemplateIdPos   :: SourcePos
+                            , _unqualifiedIdTemplateIdValue :: TemplateId }
   deriving (Show, Eq)
 
-data QualifiedId =
-  QualifiedId
+data QualifiedId
+  = QualifiedIdNestedId { _qualifiedIdNestedIdPos         :: SourcePos
+                        , _qualifiedIdNestedNameSpecifier :: NestedNameSpecifier
+                        , _qualifiedIdNestedIdIsTemplate  :: Bool
+                        , _qualifiedIdNestedUnqualifiedId :: UnqualifiedId }
+  | QualifiedIdIdentifier { _qualifiedIdIdentifierPos   :: SourcePos
+                          , _qualifiedIdIdentifierValue :: Id }
+  | QualifiedIdOperatorFunctionId { _qualifiedIdOperatorFunctionIdPos   :: SourcePos
+                                  , _qualifiedIdOperatorFunctionIdValue :: OperatorFunctionId }
+  | QualifiedIdLiteralOperatorId { _qualifiedIdLiteralOperatorIdPos   :: SourcePos
+                                 , _qualifiedIdLiteralOperatorIdValue :: LiteralOperatorId }
+  | QualifiedIdTemplateId { _qualifiedIdTemplateIdPos   :: SourcePos
+                          , _qualifiedIdTemplateIdValue :: TemplateId }
   deriving (Show, Eq)
 
 unqualifiedId :: P UnqualifiedId
@@ -136,8 +169,20 @@ unqualifiedId = undefined
 qualifiedId :: P QualifiedId
 qualifiedId = undefined
 
-data NestedNameSpecifier =
-  NestedNameSpecifier
+data NestedNameSpecifier
+  = NestedNameSpecifierType { _nestedNameSpecifierTypePos   :: SourcePos
+                            , _nestedNameSpecifierTypeValue :: TypeName }
+  | NestedNameSpecifierNamespace { _nestedNameSpecifierNamespacePos   :: SourcePos
+                                 , _nestedNameSpecifierNamespaceValue :: NamespaceName }
+  | NestedNameSpecifierDecltype { _nestedNameSpecifierDecltypeSpecifierPos   :: SourcePos
+                                , _nestedNameSpecifierDecltypeSpecifierValue :: DecltypeSpecifier }
+  | NestedNameSpecifierIdentifier { _nestedNameSpecifierIdentifierPos    :: SourcePos
+                                  , _nestedNameSpecifierIdentifierPrefix :: NestedNameSpecifier
+                                  , _nestedNameSpecifierIdentifierValue  :: Id}
+  | NestedNameSpecifierTemplate { _nestedNameSpecifierTemplatePos        :: SourcePos
+                                , _nestedNameSpecifierTemplatePrefix     :: NestedNameSpecifier
+                                , _nestedNameSpecifierTemplateIsTemplate :: Bool
+                                , _nestedNameSpecifierTemplateValue      :: SimpleTemplateId }
   deriving (Show, Eq)
 
 nestedNameSpecifier :: P NestedNameSpecifier
@@ -167,22 +212,35 @@ nestedNameSpecifier = undefined
 lambdaExpression :: P Expression
 lambdaExpression = undefined
 
-data LambdaIntroducer =
-  LambdaIntroducer
-  deriving (Show, Eq)
+data LambdaIntroducer = LambdaIntroducer
+  { _lambdaIntroducerPos :: SourcePos
+  , _lambdaIntroducerValue :: Maybe LambdaCapture
+  } deriving (Show, Eq)
 
 lambdaIntroducer :: P LambdaIntroducer
 lambdaIntroducer = undefined
 
-data LambdaCapture =
-  LambdaCapture
+data LambdaCapture
+  = LambdaCaptureDefault { _lambdaCaptureDefaultPos   :: SourcePos
+                         , _lambdaCaptureDefaultValue :: CaptureDefault }
+  | LambdaCaptureList { _lambdaCaptureListPos   :: SourcePos
+                      , _lambdaCaptureListValue :: CaptureList }
+  | LambdaCaptureDefaultAndList { _lambdaCaptureDefaultAndListPos    :: SourcePos
+                                , _lambdaCaptureDefaultAndListFirst  :: CaptureDefault
+                                , _lambdaCaptureDefaultAndListSecond :: CaptureList }
   deriving (Show, Eq)
 
 lambdaCapture :: P LambdaCapture
 lambdaCapture = undefined
 
-data CaptureDefault =
-  CaptureDefault
+data CaptureDefault = CaptureDefault
+  { _captureDefaultPos  :: SourcePos
+  , _captureDefaultType :: CaptureDefaultType
+  } deriving (Show, Eq)
+
+data CaptureDefaultType
+  = CaptureByRef
+  | CaptureByValue
   deriving (Show, Eq)
 
 captureDefault :: P CaptureDefault
@@ -197,16 +255,25 @@ data CaptureList = CaptureList
 captureList :: P CaptureList
 captureList = undefined
 
-data Capture =
-  Capture
+data Capture
+  = CaptureIdentifier { _captureIdentifierRef   :: SourcePos
+                      , _captureIdentifierValue :: Id }
+  | CaptureRef { _captureRefPos   :: SourcePos
+               , _captureRefValue :: Id }
+  | CaptureThis { _captureThisPos :: SourcePos }
   deriving (Show, Eq)
 
 capture :: P Capture
 capture = undefined
 
-data LambdaDeclarator =
-  LambdaDeclarator
-  deriving (Show, Eq)
+data LambdaDeclarator = LambdaDeclarator
+  { _lambdaDeclaratorPos                        :: SourcePos
+  , _lambdaDeclaratorParameterDeclarationClause :: ParameterDeclarationClause
+  , _lambdaDeclaratorIsMutable                  :: Bool
+  , _lambdaDeclaratorExceptionSpecification     :: Maybe ExceptionSpecification
+  , _lambdaDeclaratorAttributeSpecifierSeq      :: [AttributeSpecifier]
+  , _lambdaDeclaratorTrailingReturnType         :: Maybe TrailingReturnType
+  } deriving (Show, Eq)
 
 lambdaDeclarator :: P LambdaDeclarator
 lambdaDeclarator = undefined
@@ -246,8 +313,11 @@ postfixExpression = undefined
 expressionList :: P [Expression]
 expressionList = undefined
 
-data PseudoDestructorName =
-  PseudoDestructorName
+data PseudoDestructorName
+  = PseudoDestructorName1 {}
+  | PseudoDestructorName2 {}
+  | PseudoDestructorName3 {}
+  | PseudoDestructorName4 {}
   deriving (Show, Eq)
 
 pseudoDestructorName :: P PseudoDestructorName
@@ -276,7 +346,12 @@ pseudoDestructorName = undefined
 unaryExpression :: P Expression
 unaryExpression = undefined
 
-data UnaryOperator
+data UnaryOperator = UnaryOperator
+  { _unaryOperatorPos  :: SourcePos
+  , _unaryOperatorType :: UnaryOperatorType
+  } deriving (Show, Eq)
+
+data UnaryOperatorType
   = Ptr
   | Ref
   | UnaryPlus
@@ -311,29 +386,44 @@ newExpression = undefined
 newPlacement :: P [Expression]
 newPlacement = undefined
 
-data NewTypeId =
-  NewTypeId
-  deriving (Show, Eq)
+data NewTypeId = NewTypeId
+  { _newTypeIdPos              :: SourcePos
+  , _newTypeIdTypeSpecifierSeq :: TypeSpecifierSeq
+  , _newTypeIdNewDeclarator    :: Maybe NewDeclarator
+  } deriving (Show, Eq)
 
 newTypeId :: P NewTypeId
 newTypeId = undefined
 
-data NewDeclarator =
-  NewDeclarator
+data NewDeclarator
+  = NewDeclaratorPtr { _newDeclaratorPtrPos      :: SourcePos
+                     , _newDeclaratorPtrOperator :: PtrOperator
+                     , _newDeclaratorPtrSuffix   :: Maybe NewDeclarator}
+  | NewDeclaratorNoptr { _newDeclaratorNoptrPos   :: SourcePos
+                       , _newDeclaratorNoptrValue :: NoptrNewDeclarator }
   deriving (Show, Eq)
 
 newDeclarator :: P NewDeclarator
 newDeclarator = undefined
 
-data NoptrNewDeclarator =
-  NoptrNewDeclarator
+data NoptrNewDeclarator
+  = NoptrNewDeclarator { _noptrNewDeclaratorPos        :: SourcePos
+                       , _noptrNewDeclaratorExpession  :: Expression
+                       , _noptrNewDeclaratorAttributes :: [AttributeSpecifier]}
+  | NoptrNewDeclaratorPrefixed { _noptrNewDeclaratorPrefixedPos        :: SourcePos
+                               , _noptrNewDeclaratorPrefix             :: NoptrNewDeclarator
+                               , _noptrNewDeclaratorPrefixedExpression :: Expression
+                               , _noptrNewDeclaratorPrefixedAttributes :: [AttributeSpecifier] }
   deriving (Show, Eq)
 
 noptrNewDeclarator :: P NoptrNewDeclarator
 noptrNewDeclarator = undefined
 
-data NewInitializer =
-  NewInitializer
+data NewInitializer
+  = NewInitializerExpressionList { _newInitializerExpressionListPos   :: SourcePos
+                                 , _newInitializerExpressionListValue :: [Expression] }
+  | NewInitializerBracedList { _newInitializerBracedListPos   :: SourcePos
+                             , _newInitializerBracedListValue :: BracedInitList }
   deriving (Show, Eq)
 
 newInitializer :: P NewInitializer
@@ -472,8 +562,23 @@ conditionalExpression = undefined
 assignmentExpression :: P Expression
 assignmentExpression = undefined
 
-data AssignmentOperator =
-  AssignmentOperator
+data AssignmentOperator = AssignmentOperator
+  { _assignmentOperatorPos  :: SourcePos
+  , _assignmentOperatorType :: AssignmentOperatorType
+  } deriving (Show, Eq)
+
+data AssignmentOperatorType
+  = Assign
+  | AssignMultiply
+  | AssignDivision
+  | AssignRemain
+  | AssignAdd
+  | AssignSubstract
+  | AssignRightShift
+  | AssignLeftShift
+  | AssignAnd
+  | AssignXor
+  | AssignOr
   deriving (Show, Eq)
 
 assignmentOperator :: P AssignmentOperator
@@ -502,8 +607,9 @@ constantExpression = undefined
 --  	attribute-specifier-seq[opt] jump-statement     C++0x
 --  	declaration-statement
 --  	attribute-specifier-seq[opt] try-block
-data Statement =
-  Statement
+data Statement
+  = LabeledStatement
+  | ExpressionStatement
   deriving (Show, Eq)
 
 statement :: P Statement
