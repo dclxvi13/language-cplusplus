@@ -8,8 +8,8 @@ import Language.CPlusPlus.Lexer (lexer)
 
 testLiteralExpression =
   TestCase $ do
-    let testString = ""
-        tokens = lexer testString
-        res = testParse primaryExpression tokens
+    let testString = "123"
+        expected = Right $ LiteralExpression _ $ Literal _ "123"
+        res = testParse primaryExpression $ lexer testString
 
-    undefined
+    assertEqual "literal expression" expected res
