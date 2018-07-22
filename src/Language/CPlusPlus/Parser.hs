@@ -4,17 +4,23 @@ module Language.CPlusPlus.Parser where
 import           Language.CPlusPlus.Base
 import           Language.CPlusPlus.Token
 
-import           Text.Parsec
+import           Text.Parsec              hiding (parse)
+
+parse :: P a -> String -> [CppToken] -> Either ParseError a
+parse p source input = runParser p () source input
+
+testParse :: P a -> [CppToken] -> Either ParseError a
+testParse p input = runParser p () "" input
 
 data Literal = Literal
   { _literalPos   :: SourcePos
   , _literalValue :: String
-  }
+  } deriving (Show, Eq)
 
 data Id = Id
   { _idPos   :: SourcePos
   , _idValue :: String
-  }
+  } deriving (Show, Eq)
 
 identifier :: P Id
 identifier = do
@@ -48,6 +54,7 @@ literal = do
 --  	declaration-seq[opt]
 data TranslationUnit =
   TU [Declaration]
+  deriving (Show, Eq)
 
 translationUnit :: P TranslationUnit
 translationUnit = do
@@ -96,6 +103,7 @@ data Expression
                      , _lambdaExpressionIntroducer :: LambdaIntroducer
                      , _lambdaExpressionDeclarator :: Maybe LambdaDeclarator
                      , _lambdaExpressionStatement  :: Statement }
+  deriving (Show, Eq)
 
 primaryExpression :: P Expression
 primaryExpression =
@@ -116,9 +124,11 @@ idExpression = undefined
 
 data UnqualifiedId =
   UnqualifiedId
+  deriving (Show, Eq)
 
 data QualifiedId =
   QualifiedId
+  deriving (Show, Eq)
 
 unqualifiedId :: P UnqualifiedId
 unqualifiedId = undefined
@@ -128,6 +138,7 @@ qualifiedId = undefined
 
 data NestedNameSpecifier =
   NestedNameSpecifier
+  deriving (Show, Eq)
 
 nestedNameSpecifier :: P NestedNameSpecifier
 nestedNameSpecifier = undefined
@@ -158,18 +169,21 @@ lambdaExpression = undefined
 
 data LambdaIntroducer =
   LambdaIntroducer
+  deriving (Show, Eq)
 
 lambdaIntroducer :: P LambdaIntroducer
 lambdaIntroducer = undefined
 
 data LambdaCapture =
   LambdaCapture
+  deriving (Show, Eq)
 
 lambdaCapture :: P LambdaCapture
 lambdaCapture = undefined
 
 data CaptureDefault =
   CaptureDefault
+  deriving (Show, Eq)
 
 captureDefault :: P CaptureDefault
 captureDefault = undefined
@@ -178,19 +192,21 @@ data CaptureList = CaptureList
   { _captureListPos         :: SourcePos
   , _captureListValue       :: [Capture]
   , _captureListHasThreeDot :: Bool
-  }
+  } deriving (Show, Eq)
 
 captureList :: P CaptureList
 captureList = undefined
 
 data Capture =
   Capture
+  deriving (Show, Eq)
 
 capture :: P Capture
 capture = undefined
 
 data LambdaDeclarator =
   LambdaDeclarator
+  deriving (Show, Eq)
 
 lambdaDeclarator :: P LambdaDeclarator
 lambdaDeclarator = undefined
@@ -232,6 +248,7 @@ expressionList = undefined
 
 data PseudoDestructorName =
   PseudoDestructorName
+  deriving (Show, Eq)
 
 pseudoDestructorName :: P PseudoDestructorName
 pseudoDestructorName = undefined
@@ -266,7 +283,9 @@ data UnaryOperator
   | UnaryMinus
   | Not
   | Tilda
+  deriving (Show, Eq)
 
+unaryOperator :: P UnaryOperator
 unaryOperator = undefined
 
 -- expr.new
@@ -294,24 +313,28 @@ newPlacement = undefined
 
 data NewTypeId =
   NewTypeId
+  deriving (Show, Eq)
 
 newTypeId :: P NewTypeId
 newTypeId = undefined
 
 data NewDeclarator =
   NewDeclarator
+  deriving (Show, Eq)
 
 newDeclarator :: P NewDeclarator
 newDeclarator = undefined
 
 data NoptrNewDeclarator =
   NoptrNewDeclarator
+  deriving (Show, Eq)
 
 noptrNewDeclarator :: P NoptrNewDeclarator
 noptrNewDeclarator = undefined
 
 data NewInitializer =
   NewInitializer
+  deriving (Show, Eq)
 
 newInitializer :: P NewInitializer
 newInitializer = undefined
@@ -451,6 +474,7 @@ assignmentExpression = undefined
 
 data AssignmentOperator =
   AssignmentOperator
+  deriving (Show, Eq)
 
 assignmentOperator :: P AssignmentOperator
 assignmentOperator = undefined
@@ -480,6 +504,7 @@ constantExpression = undefined
 --  	attribute-specifier-seq[opt] try-block
 data Statement =
   Statement
+  deriving (Show, Eq)
 
 statement :: P Statement
 statement = undefined
@@ -524,6 +549,7 @@ selectionStatement = undefined
 
 data Condition =
   Condition
+  deriving (Show, Eq)
 
 condition :: P Condition
 condition = undefined
@@ -546,18 +572,21 @@ iterationStatement = undefined
 
 data ForInitStatement =
   ForInitStatement
+  deriving (Show, Eq)
 
 forInitStatement :: P ForInitStatement
 forInitStatement = undefined
 
 data ForRangeDeclaration =
   ForRangeDeclaration
+  deriving (Show, Eq)
 
 forRangeDeclaration :: P ForRangeDeclaration
 forRangeDeclaration = undefined
 
 data ForRangeInitializer =
   ForRangeInitializer
+  deriving (Show, Eq)
 
 forRangeInitializer :: P ForRangeInitializer
 forRangeInitializer = undefined
@@ -613,6 +642,7 @@ declarationStatement = undefined
 --  	attribute-specifier-seq ;     C++0x
 data Declaration =
   Declaration
+  deriving (Show, Eq)
 
 declarationSeq :: P [Declaration]
 declarationSeq = undefined
@@ -651,6 +681,7 @@ attributeDeclaration = undefined
 --  	decl-specifier decl-specifier-seq     C++0x
 data DeclSpecifier =
   DeclSpecifier
+  deriving (Show, Eq)
 
 declSpecifier :: P DeclSpecifier
 declSpecifier = undefined
@@ -668,6 +699,7 @@ declSpecifierSeq = undefined
 --  	mutable
 data StorageClassSpecifier =
   StorageClassSpecifier
+  deriving (Show, Eq)
 
 storageClassSpecifier :: P StorageClassSpecifier
 storageClassSpecifier = undefined
@@ -679,6 +711,7 @@ storageClassSpecifier = undefined
 --  	explicit
 data FunctionSpecifier =
   FunctionSpecifier
+  deriving (Show, Eq)
 
 functionSpecifier :: P FunctionSpecifier
 functionSpecifier = undefined
@@ -688,6 +721,7 @@ functionSpecifier = undefined
 --  	identifier
 data TypedefName =
   TypedefName
+  deriving (Show, Eq)
 
 typedefName :: P TypedefName
 typedefName = undefined
@@ -710,24 +744,28 @@ typedefName = undefined
 --  	trailing-type-specifier trailing-type-specifier-seq     C++0x
 data TypeSpecifier =
   TypeSpecifier
+  deriving (Show, Eq)
 
 typeSpecifier :: P TypeSpecifier
 typeSpecifier = undefined
 
 data TrailingTypeSpecifier =
   TrailingTypeSpecifier
+  deriving (Show, Eq)
 
 trailingTypeSpecifier :: P TrailingTypeSpecifier
 trailingTypeSpecifier = undefined
 
 data TypeSpecifierSeq =
   TypeSpecifierSeq
+  deriving (Show, Eq)
 
 typeSpecifierSeq :: P TypeSpecifierSeq
 typeSpecifierSeq = undefined
 
 data TrailingTypeSpecifierSeq =
   TrailingTypeSpecifierSeq
+  deriving (Show, Eq)
 
 trailingTypeSpecifierSeq :: P TrailingTypeSpecifierSeq
 trailingTypeSpecifierSeq = undefined
@@ -760,18 +798,21 @@ trailingTypeSpecifierSeq = undefined
 --  	decltype ( expression )     C++0x
 data SimpleTypeSpecifier =
   SimpleTypeSpecifier
+  deriving (Show, Eq)
 
 simpleTypeSpecifier :: P SimpleTypeSpecifier
 simpleTypeSpecifier = undefined
 
 data TypeName =
   TypeName
+  deriving (Show, Eq)
 
 typeName :: P TypeName
 typeName = undefined
 
 data DecltypeSpecifier =
   DecltypeSpecifier
+  deriving (Show, Eq)
 
 decltypeSpecifier :: P DecltypeSpecifier
 decltypeSpecifier = undefined
@@ -783,6 +824,7 @@ decltypeSpecifier = undefined
 --  	enum ::opt nested-name-specifier[opt] identifier
 data ElaboratedTypeSpecifier =
   ElaboratedTypeSpecifier
+  deriving (Show, Eq)
 
 elaboratedTypeSpecifier :: P ElaboratedTypeSpecifier
 elaboratedTypeSpecifier = undefined
@@ -814,18 +856,21 @@ elaboratedTypeSpecifier = undefined
 --  	identifier
 data EnumName =
   EnumName
+  deriving (Show, Eq)
 
 enumName :: P EnumName
 enumName = undefined
 
 data EnumSpecifier =
   EnumSpecifier
+  deriving (Show, Eq)
 
 enumSpecifier :: P EnumSpecifier
 enumSpecifier = undefined
 
 data EnumHead =
   EnumHead
+  deriving (Show, Eq)
 
 enumHead :: P EnumHead
 enumHead = undefined
@@ -837,15 +882,18 @@ data EnumKeyType
   = Enum
   | EnumClass
   | EnumStruct
+  deriving (Show, Eq)
 
 data EnumKey =
   EnumKey
+  deriving (Show, Eq)
 
 enumKey :: P EnumKey
 enumKey = undefined
 
 data EnumBase =
   EnumBase
+  deriving (Show, Eq)
 
 enumBase :: P EnumBase
 enumBase = undefined
@@ -855,12 +903,14 @@ enumeratorList = undefined
 
 data EnumeratorDefinition =
   EnumeratorDefinition
+  deriving (Show, Eq)
 
 enumeratorDefinition :: P EnumeratorDefinition
 enumeratorDefinition = undefined
 
 data Enumerator =
   Enumerator
+  deriving (Show, Eq)
 
 enumerator :: P Enumerator
 enumerator = undefined
@@ -887,12 +937,14 @@ enumerator = undefined
 --  	declaration-seq[opt]
 data NamespaceName =
   NamespaceName
+  deriving (Show, Eq)
 
 namespaceName :: P NamespaceName
 namespaceName = undefined
 
 data OriginalNamespaceName =
   OriginalNamespaceName
+  deriving (Show, Eq)
 
 originalNamespaceName :: P OriginalNamespaceName
 originalNamespaceName = undefined
@@ -902,24 +954,28 @@ namespaceDefinition = undefined
 
 data NamedNamespaceDefinition =
   NamedNamespaceDefinition
+  deriving (Show, Eq)
 
 namedNamespaceDefinition :: P NamedNamespaceDefinition
 namedNamespaceDefinition = undefined
 
 data OriginalNamespaceDefinition =
   OriginalNamespaceDefinition
+  deriving (Show, Eq)
 
 originalNamespaceDefinition :: P OriginalNamespaceDefinition
 originalNamespaceDefinition = undefined
 
 data ExtensionNamespaceDefinition =
   ExtensionNamespaceDefinition
+  deriving (Show, Eq)
 
 extensionNamespaceDefinition :: P ExtensionNamespaceDefinition
 extensionNamespaceDefinition = undefined
 
 data UnnamedNamespaceDefinition =
   UnnamedNamespaceDefinition
+  deriving (Show, Eq)
 
 unnamedNamespaceDefinition :: P UnnamedNamespaceDefinition
 unnamedNamespaceDefinition = undefined
@@ -936,6 +992,7 @@ namespaceBody = undefined
 --  	::opt nested-name-specifier[opt] namespace-name
 data NamespaceAlias =
   NamespaceAlias
+  deriving (Show, Eq)
 
 namespaceAlias :: P NamespaceAlias
 namespaceAlias = undefined
@@ -945,6 +1002,7 @@ namespaceAliasDefinition = undefined
 
 data QualifiedNamespaceSpecifier =
   QualifiedNamespaceSpecifier
+  deriving (Show, Eq)
 
 qualifiedNamespaceSpecifier :: P QualifiedNamespaceSpecifier
 qualifiedNamespaceSpecifier = undefined
@@ -1014,48 +1072,56 @@ attributeSpecifierSeq = undefined
 
 data AttributeSpecifier =
   AttributeSpecifier
+  deriving (Show, Eq)
 
 attributeSpecifier :: P AttributeSpecifier
 attributeSpecifier = undefined
 
 data AlignmentSpecifier =
   AlignmentSpecifier
+  deriving (Show, Eq)
 
 alignmentSpecifier :: P AlignmentSpecifier
 alignmentSpecifier = undefined
 
 data AttributeList =
   AttributeList
+  deriving (Show, Eq)
 
 attributeList :: P AttributeList
 attributeList = undefined
 
 data Attribute =
   Attribute
+  deriving (Show, Eq)
 
 attribute :: P Attribute
 attribute = undefined
 
 data AttributeToken =
   AttributeToken
+  deriving (Show, Eq)
 
 attributeToken :: P AttributeToken
 attributeToken = undefined
 
 data AttributeScopedToken =
   AttributeScopedToken
+  deriving (Show, Eq)
 
 attributeScopedToken :: P AttributeScopedToken
 attributeScopedToken = undefined
 
 data AttributeNamespace =
   AttributeNamespace
+  deriving (Show, Eq)
 
 attributeNamespace :: P AttributeNamespace
 attributeNamespace = undefined
 
 data AttributeArgumentClause =
   AttributeArgumentClause
+  deriving (Show, Eq)
 
 attributeArgumentClause :: P AttributeArgumentClause
 attributeArgumentClause = undefined
@@ -1065,6 +1131,7 @@ balancedTokenSeq = undefined
 
 data BalancedToken =
   BalancedToken
+  deriving (Show, Eq)
 
 balancedToken :: P BalancedToken
 balancedToken = undefined
@@ -1112,42 +1179,49 @@ initDeclaratorList = undefined
 
 data InitDeclarator =
   InitDeclarator
+  deriving (Show, Eq)
 
 initDeclarator :: P InitDeclarator
 initDeclarator = undefined
 
 data Declarator =
   Declarator
+  deriving (Show, Eq)
 
 declarator :: P Declarator
 declarator = undefined
 
 data PtrDeclarator =
   PtrDeclarator
+  deriving (Show, Eq)
 
 ptrDeclarator :: P PtrDeclarator
 ptrDeclarator = undefined
 
 data NoptrDeclarator =
   NoptrDeclarator
+  deriving (Show, Eq)
 
 noptrDeclarator :: P NoptrDeclarator
 noptrDeclarator = undefined
 
 data ParametersAndQualifiers =
   ParametersAndQualifiers
+  deriving (Show, Eq)
 
 parametersAndQualifiers :: P ParametersAndQualifiers
 parametersAndQualifiers = undefined
 
 data TrailingReturnType =
   TrailingReturnType
+  deriving (Show, Eq)
 
 trailingReturnType :: P TrailingReturnType
 trailingReturnType = undefined
 
 data PtrOperator =
   PtrOperator
+  deriving (Show, Eq)
 
 ptrOperator :: P PtrOperator
 ptrOperator = undefined
@@ -1157,18 +1231,21 @@ cvQualifierSeq = undefined
 
 data CvQualifier =
   CvQualifier
+  deriving (Show, Eq)
 
 cvQualifier :: P CvQualifier
 cvQualifier = undefined
 
 data RefQualifier =
   RefQualifier
+  deriving (Show, Eq)
 
 refQualifier :: P RefQualifier
 refQualifier = undefined
 
 data DeclaratorId =
   DeclaratorId
+  deriving (Show, Eq)
 
 declaratorId :: P DeclaratorId
 declaratorId = undefined
@@ -1189,24 +1266,28 @@ declaratorId = undefined
 --  	( ptr-abstract-declarator )     C++0x
 data TypeId =
   TypeId
+  deriving (Show, Eq)
 
 typeId :: P TypeId
 typeId = undefined
 
 data AbstractDeclarator =
   AbstractDeclarator
+  deriving (Show, Eq)
 
 abstractDeclarator :: P AbstractDeclarator
 abstractDeclarator = undefined
 
 data PtrAbstractDeclarator =
   PtrAbstractDeclarator
+  deriving (Show, Eq)
 
 ptrAbstractDeclarator :: P PtrAbstractDeclarator
 ptrAbstractDeclarator = undefined
 
 data NoptrAbstractDeclarator =
   NoptrAbstractDeclarator
+  deriving (Show, Eq)
 
 noptrAbstractDeclarator :: P NoptrAbstractDeclarator
 noptrAbstractDeclarator = undefined
@@ -1225,6 +1306,7 @@ noptrAbstractDeclarator = undefined
 --  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt] = initializer-clause     C++0x
 data ParameterDeclarationClause =
   ParameterDeclarationClause
+  deriving (Show, Eq)
 
 parameterDeclarationClause :: P ParameterDeclarationClause
 parameterDeclarationClause = undefined
@@ -1234,6 +1316,7 @@ parameterDeclarationList = undefined
 
 data ParameterDeclaration =
   ParameterDeclaration
+  deriving (Show, Eq)
 
 parameterDeclaration :: P ParameterDeclaration
 parameterDeclaration = undefined
@@ -1251,6 +1334,7 @@ functionDefinition = undefined
 
 data FunctionBody =
   FunctionBody
+  deriving (Show, Eq)
 
 functionBody :: P FunctionBody
 functionBody = undefined
@@ -1273,30 +1357,35 @@ functionBody = undefined
 --  	{ }     C++0x
 data Initializer =
   Initializer
+  deriving (Show, Eq)
 
 initializer :: P Initializer
 initializer = undefined
 
 data BraceOrEqualInitializer =
   BraceOrEqualInitializer
+  deriving (Show, Eq)
 
 braceOrEqualInitializer :: P BraceOrEqualInitializer
 braceOrEqualInitializer = undefined
 
 data InitializerClause =
   InitializerClause
+  deriving (Show, Eq)
 
 initializerClause :: P InitializerClause
 initializerClause = undefined
 
 data InitializerList =
   InitializerList
+  deriving (Show, Eq)
 
 initializerList :: P InitializerList
 initializerList = undefined
 
 data BracedInitList =
   BracedInitList
+  deriving (Show, Eq)
 
 bracedInitList :: P BracedInitList
 bracedInitList = undefined
@@ -1324,24 +1413,28 @@ bracedInitList = undefined
 --  	union
 data ClassName =
   ClassName
+  deriving (Show, Eq)
 
 className :: P ClassName
 className = undefined
 
 data ClassSpecifier =
   ClassSpecifier
+  deriving (Show, Eq)
 
 classSpecifier :: P ClassSpecifier
 classSpecifier = undefined
 
 data ClassHead =
   ClassHead
+  deriving (Show, Eq)
 
 classHead :: P ClassHead
 classHead = undefined
 
 data ClassHeadName =
   ClassHeadName
+  deriving (Show, Eq)
 
 classHeadName :: P ClassHeadName
 classHeadName = undefined
@@ -1351,12 +1444,14 @@ classVirtSpecifierSeq = undefined
 
 data ClassVirtSpecifier =
   ClassVirtSpecifier
+  deriving (Show, Eq)
 
 classVirtSpecifier :: P ClassVirtSpecifier
 classVirtSpecifier = undefined
 
 data ClassKey =
   ClassKey
+  deriving (Show, Eq)
 
 classKey :: P ClassKey
 classKey = undefined
@@ -1390,12 +1485,14 @@ classKey = undefined
 --  	= 0
 data MemberSpecification =
   MemberSpecification
+  deriving (Show, Eq)
 
 memberSpecification :: P MemberSpecification
 memberSpecification = undefined
 
 data MemberDeclaration =
   MemberDeclaration
+  deriving (Show, Eq)
 
 memberDeclaration :: P MemberDeclaration
 memberDeclaration = undefined
@@ -1405,6 +1502,7 @@ memberDeclaratorList = undefined
 
 data MemberDeclarator =
   MemberDeclarator
+  deriving (Show, Eq)
 
 memberDeclarator :: P MemberDeclarator
 memberDeclarator = undefined
@@ -1414,12 +1512,14 @@ virtSpecifierSeq = undefined
 
 data VirtSpecifier =
   VirtSpecifier
+  deriving (Show, Eq)
 
 virtSpecifier :: P VirtSpecifier
 virtSpecifier = undefined
 
 data PureSpecifier =
   PureSpecifier
+  deriving (Show, Eq)
 
 pureSpecifier :: P PureSpecifier
 pureSpecifier = undefined
@@ -1445,36 +1545,42 @@ pureSpecifier = undefined
 --  	public
 data BaseClause =
   BaseClause
+  deriving (Show, Eq)
 
 baseClause :: P BaseClause
 baseClause = undefined
 
 data BaseSpecifierList =
   BaseSpecifierList
+  deriving (Show, Eq)
 
 baseSpecifierList :: P BaseSpecifierList
 baseSpecifierList = undefined
 
 data BaseSpecifier =
   BaseSpecifier
+  deriving (Show, Eq)
 
 baseSpecifier :: P BaseSpecifier
 baseSpecifier = undefined
 
 data ClassOrDecltype =
   ClassOrDecltype
+  deriving (Show, Eq)
 
 classOrDecltype :: P ClassOrDecltype
 classOrDecltype = undefined
 
 data BaseTypeSpecifier =
   BaseTypeSpecifier
+  deriving (Show, Eq)
 
 baseTypeSpecifier :: P BaseTypeSpecifier
 baseTypeSpecifier = undefined
 
 data AccessSpecifier =
   AccessSpecifier
+  deriving (Show, Eq)
 
 accessSpecifier :: P AccessSpecifier
 accessSpecifier = undefined
@@ -1488,18 +1594,21 @@ accessSpecifier = undefined
 --  	ptr-operator conversion-declarator[opt]
 data ConversionFunctionId =
   ConversionFunctionId
+  deriving (Show, Eq)
 
 conversionFunctionId :: P ConversionFunctionId
 conversionFunctionId = undefined
 
 data ConversionTypeId =
   ConversionTypeId
+  deriving (Show, Eq)
 
 conversionTypeId :: P ConversionTypeId
 conversionTypeId = undefined
 
 data ConversionDeclarator =
   ConversionDeclarator
+  deriving (Show, Eq)
 
 conversionDeclarator :: P ConversionDeclarator
 conversionDeclarator = undefined
@@ -1518,24 +1627,28 @@ conversionDeclarator = undefined
 --  	identifier
 data CtorInitializer =
   CtorInitializer
+  deriving (Show, Eq)
 
 ctorInitializer :: P CtorInitializer
 ctorInitializer = undefined
 
 data MemInitializerList =
   MemInitializerList
+  deriving (Show, Eq)
 
 memInitializerList :: P MemInitializerList
 memInitializerList = undefined
 
 data MemInitializer =
   MemInitializer
+  deriving (Show, Eq)
 
 memInitializer :: P MemInitializer
 memInitializer = undefined
 
 data MemInitializerId =
   MemInitializerId
+  deriving (Show, Eq)
 
 memInitializerId :: P MemInitializerId
 memInitializerId = undefined
@@ -1589,12 +1702,14 @@ memInitializerId = undefined
 --  	[]
 data OperatorFunctionId =
   OperatorFunctionId
+  deriving (Show, Eq)
 
 operatorFunctionId :: P OperatorFunctionId
 operatorFunctionId = undefined
 
 data OverloadableOperator =
   OverloadableOperator
+  deriving (Show, Eq)
 
 overloadableOperator :: P OverloadableOperator
 overloadableOperator = undefined
@@ -1604,6 +1719,7 @@ overloadableOperator = undefined
 --  	operator "" identifier     C++0x
 data LiteralOperatorId =
   LiteralOperatorId
+  deriving (Show, Eq)
 
 literalOperatorId :: P LiteralOperatorId
 literalOperatorId = undefined
@@ -1633,12 +1749,14 @@ templateParameterList = undefined
 --  	template < template-parameter-list > class identifier[opt] = id-expression
 data TemplateParameter =
   TemplateParameter
+  deriving (Show, Eq)
 
 templateParameter :: P TemplateParameter
 templateParameter = undefined
 
 data TypeParameter =
   TypeParameter
+  deriving (Show, Eq)
 
 typeParameter :: P TypeParameter
 typeParameter = undefined
@@ -1661,30 +1779,35 @@ typeParameter = undefined
 --  	id-expression     C++0x
 data SimpleTemplateId =
   SimpleTemplateId
+  deriving (Show, Eq)
 
 simpleTemplateId :: P SimpleTemplateId
 simpleTemplateId = undefined
 
 data TemplateId =
   TemplateId
+  deriving (Show, Eq)
 
 templateId :: P TemplateId
 templateId = undefined
 
 data TemplateName =
   TemplateName
+  deriving (Show, Eq)
 
 templateName :: P TemplateName
 templateName = undefined
 
 data TemplateArgumentList =
   TemplateArgumentList
+  deriving (Show, Eq)
 
 templateArgumentList :: P TemplateArgumentList
 templateArgumentList = undefined
 
 data TemplateArgument =
   TemplateArgument
+  deriving (Show, Eq)
 
 templateArgument :: P TemplateArgument
 templateArgument = undefined
@@ -1695,6 +1818,7 @@ templateArgument = undefined
 --  	typename ::opt nested-name-specifier template[opt] simple-template-id     C++0x
 data TypenameSpecifier =
   TypenameSpecifier
+  deriving (Show, Eq)
 
 typenameSpecifier :: P TypenameSpecifier
 typenameSpecifier = undefined
@@ -1729,12 +1853,14 @@ explicitSpecialization = undefined
 --  	throw assignment-expression[opt]
 data TryBlock =
   TryBlock
+  deriving (Show, Eq)
 
 tryBlock :: P TryBlock
 tryBlock = undefined
 
 data FunctionTryBlock =
   FunctionTryBlock
+  deriving (Show, Eq)
 
 functionTryBlock :: P FunctionTryBlock
 functionTryBlock = undefined
@@ -1744,12 +1870,14 @@ handlerSeq = undefined
 
 data Handler =
   Handler
+  deriving (Show, Eq)
 
 handler :: P Handler
 handler = undefined
 
 data ExceptionDeclaration =
   ExceptionDeclaration
+  deriving (Show, Eq)
 
 exceptionDeclaration :: P ExceptionDeclaration
 exceptionDeclaration = undefined
@@ -1771,24 +1899,28 @@ throwExpression = undefined
 --  	noexcept     C++0x
 data ExceptionSpecification =
   ExceptionSpecification
+  deriving (Show, Eq)
 
 exceptionSpecification :: P ExceptionSpecification
 exceptionSpecification = undefined
 
 data DynamicExceptionSpecification =
   DynamicExceptionSpecification
+  deriving (Show, Eq)
 
 dynamicExceptionSpecification :: P DynamicExceptionSpecification
 dynamicExceptionSpecification = undefined
 
 data TypeIdList =
   TypeIdList
+  deriving (Show, Eq)
 
 typeIdList :: P TypeIdList
 typeIdList = undefined
 
 data NoexceptSpecification =
   NoexceptSpecification
+  deriving (Show, Eq)
 
 noexceptSpecification :: P NoexceptSpecification
 noexceptSpecification = undefined

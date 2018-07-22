@@ -5,7 +5,8 @@ import qualified Language.CPlusPlus.Lexer as L
 import Text.Parsec
 import Text.Parsec.Pos (newPos)
 
-type P = Parsec [L.L L.Token] ()
+type P = Parsec [CppToken] ()
+type CppToken = L.L L.Token
 
 cppToken :: L.Token -> P ()
 cppToken t' = cppToken' (\t -> if t' == t then Just () else Nothing)
