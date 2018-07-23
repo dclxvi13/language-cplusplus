@@ -310,6 +310,11 @@ lambdaDeclarator = undefined
 postfixExpression :: P Expression
 postfixExpression = undefined
 
+data ExpressionList = ExpressionList
+  { _expressionListPos   :: SourcePos
+  , _expressionListValue :: InitializerList
+  } deriving (Show, Eq)
+
 expressionList :: P [Expression]
 expressionList = undefined
 
@@ -383,7 +388,7 @@ unaryOperator = undefined
 newExpression :: P Expression
 newExpression = undefined
 
-newPlacement :: P [Expression]
+newPlacement :: P ExpressionList
 newPlacement = undefined
 
 data NewTypeId = NewTypeId
@@ -421,7 +426,7 @@ noptrNewDeclarator = undefined
 
 data NewInitializer
   = NewInitializerExpressionList { _newInitializerExpressionListPos   :: SourcePos
-                                 , _newInitializerExpressionListValue :: [Expression] }
+                                 , _newInitializerExpressionListValue :: Maybe ExpressionList }
   | NewInitializerBracedList { _newInitializerBracedListPos   :: SourcePos
                              , _newInitializerBracedListValue :: BracedInitList }
   deriving (Show, Eq)
