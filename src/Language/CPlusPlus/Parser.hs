@@ -105,13 +105,146 @@ data Expression
                      , _lambdaExpressionDeclarator :: Maybe LambdaDeclarator
                      , _lambdaExpressionStatement  :: Statement }
   -- postfix expression
-  -- unary expression
-  -- new expression
-  -- delete expression
-  -- noexcept expression
-  -- cast expression
+  --  	primary-expression
+  --  	postfix-expression [ expression ]
+  | GetByIndexExpression { _getByIndexExpressionPos   :: SourcePos
+                         , _getByIndexExpressionFrom  :: Expression
+                         , _getByIndexExpressionIndex :: Expression }
+  --  	postfix-expression [ braced-init-list[opt] ]     C++0x
+  | GetByBracedExpression { _getByBracedExpressionPos      :: SourcePos
+                          , _getByBracedExpressionFrom     :: Expression
+                          , _getByBracedExpressionInitList :: Maybe BracedInitList }
+  --  	postfix-expression ( expression-list[opt] )
+  | CallExpression { _callExpressionPos    :: SourcePos
+                   , _callExpressionCallee :: Expression
+                   , _callExpressionArgs   :: Maybe ExpressionList }
+  --  	simple-type-specifier ( expression-list[opt] )
+  | SimpleTypeCallExpression { _simpleTypeCallExpressionPos  :: SourcePos
+                             , _simpleTypeCallExpressionType :: SimpleTypeSpecifier
+                             , _simpleTypeCallExpressionArgs :: Maybe ExpressionList }
+  --  	typename-specifier ( expression-list[opt] )
+  | TypenameCallExpression { _typenameCallExpressionPos      :: SourcePos
+                           , _typenameCallExpressionTypename :: TypeSpecifier
+                           , _typenameCallExpressionArgs     :: Maybe ExpressionList }
+  --  	simple-type-specifier braced-init-list     C++0x
+  | SimpleTypeWithBracedExpression { _simpleTypeWithBracedExpressionPos        :: SourcePos
+                                   , _simpleTypeWithBracedExpressionSimpleType :: SimpleTypeSpecifier
+                                   , _simpleTypeWithBracedExpressionBraced     :: BracedInitList }
+  --  	typename-specifier braced-init-list     C++0x
+  | TypenameWithBracedExpression { _typenameWithBracedExpressionPos      :: SourcePos
+                                 , _typenameWithBracedExpressionTypename :: TypenameSpecifier
+                                 , _typenameWithBracedExpressionBraced   :: BracedInitList }
+  --  	postfix-expression . template[opt] id-expression
+  | GetFromRefExpression { _getFromRefExpressionPos :: SourcePos
+                         , _getFromRefExpressionRef :: Expression
+                         , _getFromRefExpressionIsTemplate :: Bool
+                         , _getFromRefExpressionElem :: Expression }
+  --  	postfix-expression -> template[opt] id-expression
+  | GetFromPtrExpression { _getFromPtrExpressionPos :: SourcePos
+                         , _getFromPtrExpressionPtr :: Expression
+                         , _getFromPtrExpressionIsTemplate :: Bool
+                         , _getFromPtrExpressionElem :: Expression }
+  --  	postfix-expression . pseudo-destructor-name
+  | GetDestructorFromRefExpression { _getDestructorFromRefExpressionPos :: SourcePos
+                                   , _getDestructorFromRefExpressionRef :: Expression
+                                   , _getDestructorFromRefExpressionDestructor :: PseudoDestructorName }
+  --  	postfix-expression -> pseudo-destructor-name
+  | GetDestructorFromPtrExpression { _getDestructorFromPtrExpressionPos :: SourcePos
+                                   , _getDestructorFromPtrExpressionPtr :: Expression
+                                   , _getDestructorFromPtrExpressionDestructor :: PseudoDestructorName }
+  --  	postfix-expression ++
+  | PostIncrementExpression { _postIncrementExpressionPos :: SourcePos
+                            , _postIncrementExpressionValue :: Expression }
+  --  	postfix-expression --
+  | PostDecrementExpression { _postDecrementExpressionPos :: SourcePos
+                            , _postDecrementExpressionValue :: Expression }
+  --  	dynamic_cast < type-id > ( expression )
+  | DinamicCastExpression { _dinamicCastExpressionPos :: SourcePos
+                          , _dinamicCastExpressionType :: TypeId
+                          , _dinamicCastExpressionCasted :: Expression }
+  --  	static_cast < type-id > ( expression )
+  | StaticCastExpression { _staticCastExpressionPos :: SourcePos
+                         , _staticCastExpressionType :: TypeId
+                         , _staticCastExpressionCasted :: Expression }
+  --  	reinterpret_cast < type-id > ( expression )
+  | ReinterpretCastExpression { _reinterpretCastExpressionPos :: SourcePos
+                              , _reinterpretCastExpressionType :: TypeId
+                              , _reinterpretCastExpressionCasted :: Expression }
+  --  	const_cast < type-id > ( expression )
+  | ConstCastExpression { _constCastExpressionPos :: SourcePos
+                        , _constCastExpressionType :: TypeId
+                        , _constCastExpressionCasted :: Expression}
+  --  	typeid ( expression )
+  --  	typeid ( type-id )
+  | TypeIdExpression { _typeIdExpressionPos :: SourcePos
+                     , _typeIdExpressionCalled :: Either Expression TypeId }
+  --  	++ cast-expression
+  | PrefIncrementExpression { _prefIncrementExpressionPos :: SourcePos
+                            , _prefIncrementExpressionValue :: Expression }
+  --  	-- cast-expression
+  | PrefDecrementExpression { _prefDecrementExpressionPos :: SourcePos
+                            , _prefDecrementExpressionValue :: Expression }
+  --  	unary-operator cast-expression
+  | UnaryOperationExpression { _unaryOperationExpressionPos :: SourcePos
+                             , _unaryOperationExpressionOperator :: UnaryOperator
+                             , _unaryOperationExpressionValue :: Expression }
+  --  	sizeof unary-expression
+  | SizeOfExpression { _sizeOfExpressionPos :: SourcePos
+                     , _sizeOfExpressionValue :: Expression }
+  --  	sizeof ( type-id )
+  | SizeOfTypeExpression { _sizeOfTypeExpressionPos :: SourcePos
+                         , _sizeOfTypeExpressionType :: TypeId }
+  --  	sizeof ... ( identifier )     C++0x
+  | SizeOfThreeDottedExpression { _sizeOfThreeDottedExpressionPos :: SourcePos
+                                , _sizeOfThreeDottedExpressionId :: Id }
+  --  	alignof ( type-id )     C++0x
+  | AlignOfExpression { _alignOfExpressionPos :: SourcePos
+                      , _alignOfExpressionType :: TypeId }
+  --  	noexcept ( expression )     C++0x
+  | NoexceptExpression { _noexceptExpressionPos :: SourcePos
+                       , _noexceptExpressionValue :: Expression }
+  --  	::opt new new-placement[opt] new-type-id new-initializer[opt]
+  | NewExpression { _newExpressionPos :: SourcePos
+                  , _newExpressionPlacement :: Maybe ExpressionList
+                  , _newExpressionTypeId :: NewTypeId
+                  , _newExpressionInitializer :: Maybe NewInitializer }
+  --  	::opt new new-placement[opt] ( type-id ) new-initializer[opt]
+  | NewParensedExpression { _newParensedExpressionPos :: SourcePos
+                          , _newParensedExpressionPlacement :: Maybe ExpressionList
+                          , _newParensedExpressionTypeId :: TypeId
+                          , _newParensedExpressionInitializer :: Maybe NewInitializer }
+  --  	::opt delete cast-expression
+  | DeleteExpression { _deleteExpressionPos :: SourcePos
+                     , _deleteExpressionValue :: Expression }
+  --  	::opt delete [ ] cast-expression
+  | DeleteArrayExpression { _deleteArrayExpressionPos :: SourcePos
+                          , _deleteArrayExpressionValue :: Expression }
+  --  	( type-id ) cast-expression
+  | CastExpression { _castExpressionPos :: SourcePos
+                   , _castExpressionType :: TypeId
+                   , _castExpressionValue :: Expression }
+  --  	pm-expression .* cast-expression
+  | GetPtrFromRefExpression { _getPtrFromRefExpressionPos :: SourcePos
+                            , _getPtrFromRefExpressionFrom :: Expression
+                            , _getPtrFromRefExpressionPtr :: Expression }
+  --  	pm-expression ->* cast-expression
+  | GetPtrFromPtrExpression { _getPtrFromPtrExpressionPos :: SourcePos
+                            , _getPtrFromPtrExpressionFrom :: Expression
+                            , _getPtrFromPtrExpressionPtr :: Expression }
   -- binary expression
+  | BinaryOperationExpression { _binaryOperationExpressionPos :: SourcePos
+                              , _binaryOperationExpressionOperator :: BinaryOperator
+                              , _binaryOperationExpressionLeft :: Expression
+                              , _binaryOperationExpressionRight :: Expression }
   -- conditional expression
+  | ConditionalExpression { _conditionalExpressionPos :: SourcePos
+                          , _conditionalExpressionCondition :: Expression
+                          , _conditionalExpressionTruePart :: Expression
+                          , _conditionalExpressionFalsePart :: Expression }
+  -- comma expression
+  | CommaExpression { _commaExpressionPos :: SourcePos
+                    , _commaExpressionLeft :: Expression
+                    , _commaExpressionRight :: Expression }
   deriving (Show, Eq)
 
 primaryExpression :: P Expression
@@ -468,6 +601,15 @@ pmExpression = undefined
 --  	multiplicative-expression * pm-expression
 --  	multiplicative-expression / pm-expression
 --  	multiplicative-expression % pm-expression
+data BinaryOperator
+  = BinaryOperator { _binaryOperatorPos :: SourcePos
+                   , _binaryOperatorType :: BinaryOperatorType }
+
+data BinaryOperatorType
+  = Multiply
+  | Divide
+  | Remain
+
 multiplicativeExpression :: P Expression
 multiplicativeExpression = undefined
 
