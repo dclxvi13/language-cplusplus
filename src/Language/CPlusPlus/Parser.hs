@@ -241,6 +241,14 @@ data Expression
                           , _conditionalExpressionCondition :: Expression
                           , _conditionalExpressionTruePart :: Expression
                           , _conditionalExpressionFalsePart :: Expression }
+  -- logical-or-expression assignment-operator initializer-clause
+  | AssignmentExpression { _assignmentExpressionPos :: SourcePos
+                         , _assignmentExpressionValue :: Expression
+                         , _assignmentExpressionOperator :: AssignmentOperator
+                         , _assignmentExpressionInitializer :: InitializerClause }
+  -- throw assignment-expression[opt]
+  | ThrowExpression { _throwExpressionPos :: SourcePos
+                    , _throwExpressionValue :: Maybe Expression }
   -- comma expression
   | CommaExpression { _commaExpressionPos :: SourcePos
                     , _commaExpressionLeft :: Expression
@@ -604,11 +612,28 @@ pmExpression = undefined
 data BinaryOperator
   = BinaryOperator { _binaryOperatorPos :: SourcePos
                    , _binaryOperatorType :: BinaryOperatorType }
+  deriving (Show, Eq)
 
 data BinaryOperatorType
   = Multiply
   | Divide
   | Remain
+  | Plus
+  | Minus
+  | LeftShift
+  | RightShift
+  | Greater
+  | Lesser
+  | GreaterEqual
+  | LesserEqual
+  | Equal
+  | NotEqual
+  | BitAnd
+  | BitXor
+  | BitOr
+  | LogicalAnd
+  | LogicalOr 
+  deriving (Show, Eq)
 
 multiplicativeExpression :: P Expression
 multiplicativeExpression = undefined
@@ -755,8 +780,96 @@ constantExpression = undefined
 --  	declaration-statement
 --  	attribute-specifier-seq[opt] try-block
 data Statement
-  = LabeledStatement
-  | ExpressionStatement
+  --  	attribute-specifier-seq[opt] identifier : statement
+  = LabeledStatement { _labeledStatementPos :: SourcePos
+                     , _labeledStatementAttrubutes :: [AttributeSpecifier]
+                     , _labeledStatementId :: Id
+                     , _labeledStatementBlock :: Statement }
+  --  	attribute-specifier-seq[opt] case constant-expression : statement
+  | LabeledCaseStatement { _labeledCaseStatementPos :: SourcePos
+                         , _labeledCaseStatementAttributes :: [AttributeSpecifier]
+                         , _labeledCaseStatementExpression :: Expression
+                         , _labeledCaseStatementBlock :: Statement }
+  --  	attribute-specifier-seq[opt] default : statement
+  | LabeledDefaultStatement { _labeledDefaultStatementPos :: SourcePos
+                            , _labeledDefaultStatementAttributes :: [AttributeSpecifier]
+                            , _labeledDefaultStatementBlock :: Statement }
+  --  	attribute-specifier-seq[opt] expression-statement     C++0x
+  --  	expression[opt] ;
+  | ExpressionStatement { _expressionStatementPos :: SourcePos
+                        , _expressionStatementAttributes :: [AttributeSpecifier]
+                        , _expressionStatementValue :: Maybe Expression }
+  --  	attribute-specifier-seq[opt] compound-statement     C++0x
+  --  	{ statement-seq[opt] }
+  | CompoundStatement { _compoundStatementPos :: SourcePos
+                      , _compoundStatementAttributes :: [AttributeSpecifier]
+                      , _compoundStatementBlock :: [Statement] }
+  --  	attribute-specifier-seq[opt] selection-statement     C++0x
+  --  	if ( condition ) statement
+  | IfStatement { _ifStatementPos :: SourcePos
+                , _ifStatementAttributes :: [AttributeSpecifier]
+                , _ifStatementCondition :: Condition
+                , _ifStatementBlock :: Statement }
+  --  	if ( condition ) statement else statement
+  | IfElseStatement { _ifElseStatementPos :: SourcePos
+                    , _ifElseStatementAttributes :: [AttributeSpecifier]
+                    , _ifElseStatementCondition :: Condition
+                    , _ifElseStatementIfBlock :: Statement
+                    , _ifElseStatementElseBlock :: Statement }
+  --  	switch ( condition ) statement
+  | SwitchStatement { _switchStatementPos :: SourcePos
+                    , _switchStatementAttributes :: [AttributeSpecifier]
+                    , _switchStatementCondition :: Condition
+                    , _switchStatementBlock :: Statement }
+  --  	attribute-specifier-seq[opt] iteration-statement     C++0x
+  --  	while ( condition ) statement
+  | WhileStatement { _whileStatementPos :: SourcePos
+                   , _whileStatementAttributes :: [AttributeSpecifier]
+                   , _whileStatementCondition :: Condition
+                   , _whileStatementBlock :: Statement }
+  --  	do statement while ( expression ) ;
+  | DoWhileStatement { _doWhileStatementPos :: SourcePos
+                     , _doWhileStatementAttributes :: [AttributeSpecifier]
+                     , _doWhileStatementBlock :: Statement
+                     , _doWhileStatementExpression :: Expression }
+  --  	for ( for-init-statement condition[opt] ; expression[opt] ) statement
+  | ForStatement { _forStatementPos :: SourcePos
+                 , _forStatementAttributes :: [AttributeSpecifier]
+                 , _forStatementInit :: ForInitStatement
+                 , _forStatementCondition :: Maybe Condition
+                 , _forStatementExpression :: Maybe Expression
+                 , _forStatementBlock :: Statement }
+  --  	for ( for-range-declaration : for-range-initializer ) statement     C++0x
+  | ForRangeStatement { _forRangeStatementPos :: SourcePos
+                      , _forRangeStatementAttributes :: [AttributeSpecifier]
+                      , _forRangeStatementDeclaration :: ForRangeDeclaration
+                      , _forRangeStatementInitializer :: ForRangeInitializer
+                      , _forRangeStatementBlock :: Statement }
+  --  	attribute-specifier-seq[opt] jump-statement     C++0x
+  --  	break ;
+  | BreakStatement { _breakStatementPos :: SourcePos
+                   , _breakStatementAttributes :: [AttributeSpecifier] }
+  --  	continue ;
+  | ContinueStatement { _continueStatementPos :: SourcePos
+                      , _continueStatementAttributes :: [AttributeSpecifier] }
+  --  	return expression[opt] ;
+  --  	return braced-init-list[opt] ;     C++0x
+  | ReturnStatement { _returnStatementPos :: SourcePos
+                    , _returnStatementAttributes :: [AttributeSpecifier]
+                    , _returnStatementValue :: Maybe (Either Expression BracedInitList) }
+  --  	goto identifier ;
+  | GotoStatement { _gotoStatementPos :: SourcePos
+                  , _gotoStatementAttributes :: [AttributeSpecifier]
+                  , _gotoStatementLabel :: Id }
+  --  	declaration-statement
+  | DeclarationStatement { _declarationStatementPos :: SourcePos
+                         , _declarationStatementValue :: Declaration }
+  --  	attribute-specifier-seq[opt] try-block
+  --  	try compound-statement handler-seq
+  | TryStatement { _tryStatementPos :: SourcePos
+                 , _tryStatementAttributes :: [AttributeSpecifier]
+                 , _tryStatementBlock :: Statement
+                 , _tryStatementHandlers :: [Handler] }
   deriving (Show, Eq)
 
 statement :: P Statement
