@@ -632,7 +632,7 @@ data BinaryOperatorType
   | BitXor
   | BitOr
   | LogicalAnd
-  | LogicalOr 
+  | LogicalOr
   deriving (Show, Eq)
 
 multiplicativeExpression :: P Expression
@@ -908,13 +908,27 @@ statementSeq = undefined
 --  	switch ( condition ) statement
 -- condition:
 --  	expression
---  	attribute-specifier-seqopt decl-specifier-seq declarator = initializer-clause     C++0x
---  	attribute-specifier-seqopt decl-specifier-seq declarator braced-init-list     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
+--  	attribute-specifier-seq[opt] decl-specifier-seq declarator braced-init-list     C++0x
 selectionStatement :: P Statement
 selectionStatement = undefined
 
-data Condition =
-  Condition
+data Condition
+  --  	expression
+  = ExpressionCondition { _expressionConditionPos :: SourcePos
+                        , _expressionConditionValue :: Expression }
+  --  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
+  | InitializerCondition { _initializerConditionPos :: SourcePos
+                         , _initializerConditionAttributes :: [AttributeSpecifier]
+                         , _initializerConditionDeclSpecifiers :: [DeclSpecifier]
+                         , _initializerConditionDeclarator :: Declarator
+                         , _initializerConditionInitializer :: InitializerClause }
+  --  	attribute-specifier-seq[opt] decl-specifier-seq declarator braced-init-list     C++0x
+  | InitBracedCondition { _initBracedConditionPos :: SourcePos
+                        , _initBracedConditionAttributes :: [AttributeSpecifier]
+                        , _initBracedConditionDeclSpecifiers :: [DeclSpecifier]
+                        , _initBracedConditionDeclarator :: Declarator
+                        , _initBracedConditionBracedInitList :: BracedInitList }
   deriving (Show, Eq)
 
 condition :: P Condition
@@ -932,27 +946,33 @@ condition = undefined
 -- for-range-declaration:
 --  	attribute-specifier-seq[opt] type-specifier-seq declarator     C++0x
 -- for-range-initializer:
---  	expression braced-init-list     C++0x
+--  	expression
+--    braced-init-list     C++0x
 iterationStatement :: P Statement
 iterationStatement = undefined
 
-data ForInitStatement =
-  ForInitStatement
-  deriving (Show, Eq)
+data ForInitStatement = ForInitStatement
+  { _forInitStatementPos :: SourcePos
+  , _forInitStatementValue :: Either Statement Declaration
+  } deriving (Show, Eq)
 
 forInitStatement :: P ForInitStatement
 forInitStatement = undefined
 
-data ForRangeDeclaration =
-  ForRangeDeclaration
-  deriving (Show, Eq)
+data ForRangeDeclaration = ForRangeDeclaration
+  { _forRangeDeclarationPos :: SourcePos
+  , _forRangeDeclarationAttributes :: [AttributeSpecifier]
+  , _forRangeDeclarationTypeSpecifiers :: TypeSpecifierSeq
+  , _forRangeDeclarationDeclarator :: Declarator
+  } deriving (Show, Eq)
 
 forRangeDeclaration :: P ForRangeDeclaration
 forRangeDeclaration = undefined
 
-data ForRangeInitializer =
-  ForRangeInitializer
-  deriving (Show, Eq)
+data ForRangeInitializer = ForRangeInitializer
+  { _forRangeInitializerPos :: SourcePos
+  , _forRangeInitializerValue :: Either Expression BracedInitList
+  } deriving (Show, Eq)
 
 forRangeInitializer :: P ForRangeInitializer
 forRangeInitializer = undefined
