@@ -1026,8 +1026,101 @@ declarationStatement = undefined
 --  	;     C++0x
 -- attribute-declaration:
 --  	attribute-specifier-seq ;     C++0x
-data Declaration =
-  Declaration
+data Declaration
+  --  	block-declaration
+  --  	simple-declaration
+  --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] init-declarator-list[opt] ;     C++0x
+  = SimpleDeclation { _simpleDeclationPos :: SourcePos
+                    , _simpleDeclationAttributes :: [AttributeSpecifier]
+                    , _simpleDeclationDeclSpecifiers :: [DeclSpecifier]
+                    , _simpleDeclationInitDeclarators :: [InitDeclarator] }
+  --  	asm-definition
+  --  	asm ( string-literal ) ;
+  | AsmDefinition { _asmDefinitionPos :: SourcePos
+                  , _asmDefinitionString :: Literal }
+  --  	namespace-alias-definition
+  --  	namespace identifier = qualified-namespace-specifier ;
+  | NamespaceAliasDefinition { _namespaceAliasDefinitionPos :: SourcePos
+                             , _namespaceAliasDefinitionId :: Id
+                             , _namespaceAliasDefinitionSpecifier :: QualifiedNamespaceSpecifier }
+  --  	using-declaration
+  --  	using typename[opt] ::opt nested-name-specifier unqualified-id ;
+  | UsingNestedDeclaration { _usingNestedDeclarationPos :: SourcePos
+                           , _usingNestedDeclarationTypename :: Maybe TypeName
+                           , _usingNestedDeclarationNameSpecifier :: NestedNameSpecifier
+                           , _usingNestedDeclarationId :: UnqualifiedId }
+  --  	using :: unqualified-id ;
+  | UsingDeclaration { _usingDeclarationPos :: SourcePos
+                     , _usingDeclarationId :: Id }
+  --  	using-directive
+  --  	attribute-specifier-seq[opt] using namespace ::opt nested-name-specifier[opt] namespace-name ;
+  | UsingDirective { _usingDirectivePos :: SourcePos
+                   , _usingDirectiveAttributes :: [AttributeSpecifier]
+                   , _usingDirectiveNameSpecifier :: Maybe NestedNameSpecifier
+                   , _usingDirectiveName :: NamespaceName }
+  --  	static_assert-declaration     C++0x
+  --  	static_assert ( constant-expression , string-literal ) ;     C++0x
+  | StaticAssertDeclaration { _staticAssertDeclarationPos :: SourcePos
+                            , _staticAssertDeclarationExpression :: Expression
+                            , _staticAssertDeclarationString :: Literal }
+  --  	alias-declaration     C++0x
+  --  	using identifier = type-id ;     C++0x
+  | AliasDeclaration { _aliasDeclarationPos :: SourcePos
+                     , _aliasDeclarationId :: Id
+                     , _aliasDeclarationType :: TypeId }
+  --  	opaque-enum-declaration     C++0x
+  --  	enum-key attribute-specifier-seq[opt] identifier enum-base[opt] ;     C++0x
+  | OpaqueEnumDeclaration { _opaqueEnumDeclarationPos :: SourcePos
+                          , _opaqueEnumDeclarationKey :: EnumKey
+                          , _opaqueEnumDeclarationAttributes :: [AttributeSpecifier]
+                          , _opaqueEnumDeclarationId :: Id
+                          , _opaqueEnumDeclarationBase :: Maybe EnumBase }
+  --  	function-definition
+  --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator function-body     C++0x
+  | FunctionDefinition { _functionDefinitionPos :: SourcePos
+                       , _functionDefinitionAttributes :: [AttributeSpecifier]
+                       , _functionDefinitionDeclSpecifiers :: [DeclSpecifier]
+                       , _functionDefinitionDeclarator :: Declarator
+                       , _functionDefinitionBody :: FunctionBody }
+  --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = default ;     C++0x
+  | FunctionDefaultDefinition { _functionDefaultDefinitionPos :: SourcePos
+                              , _functionDefaultDefinitionAttributes :: [AttributeSpecifier]
+                              , _functionDefaultDefinitionDeclSpecifiers :: [DeclSpecifier]
+                              , _functionDefaultDefinitionDeclarator :: Declarator }
+  --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = delete ;     C++0x
+  | FunctionDeleteDefinition { _functionDeleteDefinitionPos :: SourcePos
+                             , _functionDeleteDefinitionAttributes :: [AttributeSpecifier]
+                             , _functionDeleteDefinitionDeclSpecifiers :: [DeclSpecifier]
+                             , _functionDeleteDefinitionDeclarator :: Declarator }
+  --  	template-declaration
+  --  	template < template-parameter-list > declaration     C++0x - The export keyword is reserved for future use
+  | TemplateDeclaration { _templateDeclarationPos :: SourcePos
+                        , _templateDeclarationParameters :: [TemplateParameter]
+                        , _templateDeclarationDeclarator :: Declarator }
+  --  	explicit-instantiation
+  --  	extern[opt] template declaration     C++0x
+  | ExplicitInstantiation { _explicitInstantiationPos :: SourcePos
+                          , _explicitInstantiationHasExtern :: Bool
+                          , _explicitInstantiationDeclaration :: Declaration }
+  --  	explicit-specialization
+  --  	template < > declaration
+  | ExplicitSpecialization { _explicitSpecializationPos :: SourcePos
+                           , _explicitSpecializationDeclaration :: Declaration }
+  --  	linkage-specification
+  --  	extern string-literal { declaration-seq[opt] }
+  --  	extern string-literal declaration
+  | LinkageSpecification { _linkageSpecificationPos :: SourcePos
+                         , _linkageSpecificationString :: Literal
+                         , _linkageSpecificationDeclaration :: Either Declaration [Declaration] }
+  --  	namespace-definition
+  | NamespaceDefinition { _namespaceDefinitionPos :: SourcePos
+                        , _namespaceDefinitionValue :: Either NamedNamespaceDefinition UnnamedNamespaceDefinition }
+  --  	empty-declaration     C++0x
+  | EmptyDeclaration { _emptyDeclarationPos :: SourcePos }
+  --  	attribute-declaration     C++0x
+  --  	attribute-specifier-seq ;     C++0x
+  | AttributeDeclaration { _attributeDeclarationPos :: SourcePos
+                         , _attributeDeclarationAttributes :: [AttributeSpecifier] }
   deriving (Show, Eq)
 
 declarationSeq :: P [Declaration]
@@ -2211,9 +2304,9 @@ typenameSpecifier = undefined
 
 -- temp.explicit
 -- explicit-instantiation:
---  	externopt template declaration     C++0x
-explicitinstantiation :: P Declaration
-explicitinstantiation = undefined
+--  	extern[opt] template declaration     C++0x
+explicitInstantiation :: P Declaration
+explicitInstantiation = undefined
 
 -- temp.expl.spec
 -- explicit-specialization:
