@@ -1434,22 +1434,38 @@ elaboratedTypeSpecifier = undefined
 --  	enumerator = constant-expression
 -- enumerator:
 --  	identifier
-data EnumName =
-  EnumName
-  deriving (Show, Eq)
+data EnumName = EnumName
+  { _enumNamePos :: SourcePos
+  , _enumNameValue :: Id
+  } deriving (Show, Eq)
 
 enumName :: P EnumName
 enumName = undefined
 
-data EnumSpecifier =
-  EnumSpecifier
-  deriving (Show, Eq)
+data EnumSpecifier = EnumSpecifier
+  { _enumSpecifierPos :: SourcePos
+  , _enumSpecifierHead :: EnumHead
+  , _enumSpecifierEnumerators :: [Enumerator]
+  , _enumSpecifierHasDot :: Bool
+  } deriving (Show, Eq)
 
 enumSpecifier :: P EnumSpecifier
 enumSpecifier = undefined
 
-data EnumHead =
-  EnumHead
+data EnumHead
+  --  	enum-key attribute-specifier-seq[opt] identifier[opt] enum-base[opt]     C++0x
+  = EnumHead { _enumHeadKey :: SourcePos
+             , _enumHeadAttributes :: [AttributeSpecifier]
+             , _enumHeadId :: Maybe Id
+             , _enumHeadBase :: Maybe EnumBase }
+  --  	enum-key attribute-specifier-seq[opt] nested-name-specifier identifier enum-base[opt]     CD0x
+  | EnumHeadNested { _enumHeadNestedPos :: SourcePos
+                   , _enumHeadNestedKey :: EnumKey
+                   , _enumHeadNestedAttributes :: [AttributeSpecifier]
+                   , _enumHeadNestedName :: NestedNameSpecifier
+                   , _enumHeadNestedId :: Id
+                   , _enumHeadNestedBase :: Maybe EnumBase }
+
   deriving (Show, Eq)
 
 enumHead :: P EnumHead
@@ -1464,16 +1480,18 @@ data EnumKeyType
   | EnumStruct
   deriving (Show, Eq)
 
-data EnumKey =
-  EnumKey
-  deriving (Show, Eq)
+data EnumKey = EnumKey
+  { _enumKeyPos :: SourcePos
+  , _enumKeyType :: EnumKeyType
+  } deriving (Show, Eq)
 
 enumKey :: P EnumKey
 enumKey = undefined
 
-data EnumBase =
-  EnumBase
-  deriving (Show, Eq)
+data EnumBase = EnumBase
+  { _enumBasePos :: SourcePos
+  , _enumBaseValue :: TypeSpecifierSeq
+  } deriving (Show, Eq)
 
 enumBase :: P EnumBase
 enumBase = undefined
@@ -1481,16 +1499,21 @@ enumBase = undefined
 enumeratorList :: P [EnumeratorDefinition]
 enumeratorList = undefined
 
-data EnumeratorDefinition =
-  EnumeratorDefinition
+data EnumeratorDefinition
+  = EnumeratorDefinition { _enumeratorDefinitionPos :: SourcePos
+                         , _enumeratorDefinition :: Enumerator }
+  | EnumeratorDefinitionWithValue { _enumeratorDefinitionWithValuePos :: SourcePos
+                                  , _enumeratorDefinitionWithValueId :: Enumerator
+                                  , _enumeratorDefinitionValue :: Expression }
   deriving (Show, Eq)
 
 enumeratorDefinition :: P EnumeratorDefinition
 enumeratorDefinition = undefined
 
-data Enumerator =
-  Enumerator
-  deriving (Show, Eq)
+data Enumerator = Enumerator
+  { _enumeratorPos :: SourcePos
+  , _enumeratorValue :: Id
+  } deriving (Show, Eq)
 
 enumerator :: P Enumerator
 enumerator = undefined
