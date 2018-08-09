@@ -460,10 +460,23 @@ expressionList :: P [Expression]
 expressionList = undefined
 
 data PseudoDestructorName
-  = PseudoDestructorName1 {}
-  | PseudoDestructorName2 {}
-  | PseudoDestructorName3 {}
-  | PseudoDestructorName4 {}
+  --  	::opt nested-name-specifier[opt] type-name :: ~ type-name
+  = PseudoDestructorNameNested { _pseudoDestructorNameNestedPos :: SourcePos
+                               , _pseudoDestructorNameNestedName :: Maybe NestedNameSpecifier
+                               , _pseudoDestructorNameNestedType :: TypeName
+                               , _pseudoDestructorNameNestedDestructorName :: TypeName }
+  --  	::opt nested-name-specifier template simple-template-id :: ~ type-name     C++0x
+  | PseudoDestructorNameTemplate { _pseudoDestructorNameTemplatePos :: SourcePos
+                                 , _pseudoDestructorNameTemplateNestedName :: NestedNameSpecifier
+                                 , _pseudoDestructorNameTemplateId :: SimpleTemplateId
+                                 , _pseudoDestructorNameTemplateType :: TypeName }
+  --  	::opt nested-name-specifier[opt] ~ type-name
+  | PseudoDestructorNameTypeName { _pseudoDestructorNameTypeNamePos :: SourcePos
+                                 , _pseudoDestructorNameTypeNameNested :: NestedNameSpecifier
+                                 , _pseudoDestructorNameTypeName :: TypeName }
+  --  	~ decltype-specifier     C++0x
+  | PseudoDestructorNameDecltype { _pseudoDestructorNameDecltypePos :: SourcePos
+                                 , _pseudoDestructorNameDecltypeSpecifier :: DecltypeSpecifier }
   deriving (Show, Eq)
 
 pseudoDestructorName :: P PseudoDestructorName
@@ -920,13 +933,13 @@ data Condition
   --  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
   | InitializerCondition { _initializerConditionPos :: SourcePos
                          , _initializerConditionAttributes :: [AttributeSpecifier]
-                         , _initializerConditionDeclSpecifiers :: [DeclSpecifier]
+                         , _initializerConditionDeclSpecifiers :: DeclSpecifierSeq
                          , _initializerConditionDeclarator :: Declarator
                          , _initializerConditionInitializer :: InitializerClause }
   --  	attribute-specifier-seq[opt] decl-specifier-seq declarator braced-init-list     C++0x
   | InitBracedCondition { _initBracedConditionPos :: SourcePos
                         , _initBracedConditionAttributes :: [AttributeSpecifier]
-                        , _initBracedConditionDeclSpecifiers :: [DeclSpecifier]
+                        , _initBracedConditionDeclSpecifiers :: DeclSpecifierSeq
                         , _initBracedConditionDeclarator :: Declarator
                         , _initBracedConditionBracedInitList :: BracedInitList }
   deriving (Show, Eq)
@@ -1032,7 +1045,7 @@ data Declaration
   --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] init-declarator-list[opt] ;     C++0x
   = SimpleDeclation { _simpleDeclationPos :: SourcePos
                     , _simpleDeclationAttributes :: [AttributeSpecifier]
-                    , _simpleDeclationDeclSpecifiers :: [DeclSpecifier]
+                    , _simpleDeclationDeclSpecifiers :: DeclSpecifierSeq
                     , _simpleDeclationInitDeclarators :: [InitDeclarator] }
   --  	asm-definition
   --  	asm ( string-literal ) ;
@@ -1079,18 +1092,18 @@ data Declaration
   --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator function-body     C++0x
   | FunctionDefinition { _functionDefinitionPos :: SourcePos
                        , _functionDefinitionAttributes :: [AttributeSpecifier]
-                       , _functionDefinitionDeclSpecifiers :: [DeclSpecifier]
+                       , _functionDefinitionDeclSpecifiers :: DeclSpecifierSeq
                        , _functionDefinitionDeclarator :: Declarator
                        , _functionDefinitionBody :: FunctionBody }
   --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = default ;     C++0x
   | FunctionDefaultDefinition { _functionDefaultDefinitionPos :: SourcePos
                               , _functionDefaultDefinitionAttributes :: [AttributeSpecifier]
-                              , _functionDefaultDefinitionDeclSpecifiers :: [DeclSpecifier]
+                              , _functionDefaultDefinitionDeclSpecifiers :: DeclSpecifierSeq
                               , _functionDefaultDefinitionDeclarator :: Declarator }
   --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] declarator = delete ;     C++0x
   | FunctionDeleteDefinition { _functionDeleteDefinitionPos :: SourcePos
                              , _functionDeleteDefinitionAttributes :: [AttributeSpecifier]
-                             , _functionDeleteDefinitionDeclSpecifiers :: [DeclSpecifier]
+                             , _functionDeleteDefinitionDeclSpecifiers :: DeclSpecifierSeq
                              , _functionDeleteDefinitionDeclarator :: Declarator }
   --  	template-declaration
   --  	template < template-parameter-list > declaration     C++0x - The export keyword is reserved for future use
@@ -1158,14 +1171,31 @@ attributeDeclaration = undefined
 -- decl-specifier-seq:
 --  	decl-specifier attribute-specifier-seq[opt]     C++0x
 --  	decl-specifier decl-specifier-seq     C++0x
-data DeclSpecifier =
-  DeclSpecifier
+data DeclSpecifier
+  = StorageDeclSpecifier { _storageDeclSpecifierPos :: SourcePos
+                         , _storageDeclSpecifierValue :: StorageClassSpecifier }
+  | TypeDeclSpecifier { _typeDeclSpecifierPos :: SourcePos
+                      , _typeDeclSpecifierValue :: TypeSpecifier }
+  | FunctionDeclSpecifier { _functionDeclSpecifierPos :: SourcePos
+                          , _functionDeclSpecifierValue :: FunctionSpecifier }
+  | FriendDeclSpecifier { _friendDeclSpecifierPos :: SourcePos }
+  | TypedefDeclSpecifier { _typedefDeclSpecifierPos :: SourcePos }
+  | ConstexprDeclSpecifier { _constexprDeclSpecifierPos :: SourcePos }
   deriving (Show, Eq)
 
 declSpecifier :: P DeclSpecifier
 declSpecifier = undefined
 
-declSpecifierSeq :: P [DeclSpecifier]
+data DeclSpecifierSeq
+  = AttributedDeclSpecifier { _attributedDeclSpecifierPos :: SourcePos
+                            , _attributedDeclSpecifierAttributes :: [AttributeSpecifier]
+                            , _attributedDeclSpecifierValue :: DeclSpecifier }
+  | SimpleDeclSpecifierSeq { _simpleDeclSpecifierSeqPos :: SourcePos
+                           , _simpleDeclSpecifier :: DeclSpecifier
+                           , _simpleDeclSpecifierSeq :: DeclSpecifierSeq }
+  deriving (Show, Eq)
+
+declSpecifierSeq :: P DeclSpecifierSeq
 declSpecifierSeq = undefined
 
 -- dcl.stc
@@ -1176,8 +1206,13 @@ declSpecifierSeq = undefined
 --  	thread_local     C++0x
 --  	extern
 --  	mutable
-data StorageClassSpecifier =
-  StorageClassSpecifier
+data StorageClassSpecifier
+  = AutoSpecifier { _autoSpecifierPos :: SourcePos }
+  | RegisterSpecifier { _registerSpecifierPos :: SourcePos }
+  | StaticSpecifier { _staticSpecifierPos :: SourcePos }
+  | ThreadLocalSpecifier { _threadLocalSpecifierPos :: SourcePos }
+  | ExternSpecifier { _externSpecifierPos :: SourcePos }
+  | MutableSpecifier { _mutableSpecifierPos :: SourcePos }
   deriving (Show, Eq)
 
 storageClassSpecifier :: P StorageClassSpecifier
@@ -1188,8 +1223,10 @@ storageClassSpecifier = undefined
 --  	inline
 --  	virtual
 --  	explicit
-data FunctionSpecifier =
-  FunctionSpecifier
+data FunctionSpecifier
+  = InlineSpecifier { _inlineSpecifierPos :: SourcePos }
+  | VirtualSpecifier { _virtualSpecifierPos :: SourcePos }
+  | ExplicitSpecifier { _explicitSpecifierPos :: SourcePos }
   deriving (Show, Eq)
 
 functionSpecifier :: P FunctionSpecifier
@@ -1198,9 +1235,10 @@ functionSpecifier = undefined
 -- dcl.typedef
 -- typedef-name:
 --  	identifier
-data TypedefName =
-  TypedefName
-  deriving (Show, Eq)
+data TypedefName = TypedefName
+  { _typedefNamePos :: SourcePos
+  , _typedefNameId :: Id
+  } deriving (Show, Eq)
 
 typedefName :: P TypedefName
 typedefName = undefined
@@ -1221,29 +1259,51 @@ typedefName = undefined
 -- trailing-type-specifier-seq:
 --  	trailing-type-specifier attribute-specifier-seq[opt]     C++0x
 --  	trailing-type-specifier trailing-type-specifier-seq     C++0x
-data TypeSpecifier =
-  TypeSpecifier
+data TypeSpecifier
+  = TypeSpecifierTrailing { _typeSpecifierTrailingPos :: SourcePos
+                          , _typeSpecifierTrailingValue :: TrailingTypeSpecifier }
+  | TypeSpecifierClass { _typeSpecifierClassPos :: SourcePos
+                       , _typeSpecifierClassValue :: ClassSpecifier }
+  | TypeSpecifierEnum { _typeSpecifierEnumPos :: SourcePos
+                      , _typeSpecifierEnumValue :: EnumSpecifier }
   deriving (Show, Eq)
 
 typeSpecifier :: P TypeSpecifier
 typeSpecifier = undefined
 
-data TrailingTypeSpecifier =
-  TrailingTypeSpecifier
+data TrailingTypeSpecifier
+  = TrailingTypeSpecifierSimple { _trailingTypeSpecifierSimplePos :: SourcePos
+                                , _trailingTypeSpecifierSimpleValue :: SimpleTypeSpecifier }
+  | TrailingTypeSpecifierElaborated { _trailingTypeSpecifierElaboratedPos :: SourcePos
+                                    , _trailingTypeSpecifierElaboratedValue :: ElaboratedTypeSpecifier }
+  | TrailingTypeSpecifierTypename { _trailingTypeSpecifierTypenamePos :: SourcePos
+                                  , _trailingTypeSpecifierTypenameValue :: TypenameSpecifier }
+  | TrailingTypeSpecifierCV { _trailingTypeSpecifierCVPos :: SourcePos
+                            , _trailingTypeSpecifierCVValue :: CvQualifier }
   deriving (Show, Eq)
 
 trailingTypeSpecifier :: P TrailingTypeSpecifier
 trailingTypeSpecifier = undefined
 
-data TypeSpecifierSeq =
-  TypeSpecifierSeq
+data TypeSpecifierSeq
+  = TypeSpecifierAttributed { _typeSpecifierAttributedPos :: SourcePos
+                            , _typeSpecifierAttributes :: [AttributeSpecifier]
+                            , _typeSpecifierAttributedValue :: TypeSpecifier }
+  | TypeSpecifierSeq { _typeSpecifierSeqPos :: SourcePos
+                     , _typeSpecifierSeq :: TypeSpecifierSeq
+                     , _typeSpecifierValue :: TypeSpecifier }
   deriving (Show, Eq)
 
 typeSpecifierSeq :: P TypeSpecifierSeq
 typeSpecifierSeq = undefined
 
-data TrailingTypeSpecifierSeq =
-  TrailingTypeSpecifierSeq
+data TrailingTypeSpecifierSeq
+  = TrailingTypeSpecifierAttributed { _trailingTypeSpecifierAttributedPos :: SourcePos
+                                    , _trailingTypeSpecifierAttributes :: [AttributeSpecifier]
+                                    , _trailingTypeSpecifierAttributedValue :: TrailingTypeSpecifier }
+  | TrailingTypeSpecifierSeq { _trailingTypeSpecifierSeqPos :: SourcePos
+                             , _trailingTypeSpecifierValue :: TrailingTypeSpecifier
+                             , _trailingTypeSpecifierSeq :: TrailingTypeSpecifierSeq }
   deriving (Show, Eq)
 
 trailingTypeSpecifierSeq :: P TrailingTypeSpecifierSeq
@@ -1275,23 +1335,52 @@ trailingTypeSpecifierSeq = undefined
 --  	simple-template-id     C++0x
 -- decltype-specifier:
 --  	decltype ( expression )     C++0x
-data SimpleTypeSpecifier =
-  SimpleTypeSpecifier
+data SimpleTypeSpecifier
+  = SimpleTypeSpecifier { _simpleTypeSpecifierPos :: SourcePos
+                        , _simpleTypeSpecifierNestedName :: Maybe NestedNameSpecifier
+                        , _simpleTypeSpecifierTypeName :: TypeName }
+  | SimpleTypeSpecifierTemplate { _simpleTypeSpecifierTemplatePos :: SourcePos
+                                , _simpleTypeSpecifierTemplateNestedName :: NestedNameSpecifier
+                                , _simpleTypeSpecifierTemplateId :: SimpleTemplateId }
+  | SimpleTypeSpecifierChar { _simpleTypeSpecifierCharPos :: SourcePos}
+  | SimpleTypeSpecifierChar16T { _simpleTypeSpecifierChar16TPos :: SourcePos }
+  | SimpleTypeSpecifierChar32T { _simpleTypeSpecifierChar32TPos :: SourcePos }
+  | SimpleTypeSpecifierWcharT { _simpleTypeSpecifierWcharTPos :: SourcePos }
+  | SimpleTypeSpecifierBool { _simpleTypeSpecifierBoolPos :: SourcePos }
+  | SimpleTypeSpecifierShort { _simpleTypeSpecifierShortPos :: SourcePos }
+  | SimpleTypeSpecifierInt { _simpleTypeSpecifierIntPos :: SourcePos }
+  | SimpleTypeSpecifierLong { _simpleTypeSpecifierLongPos :: SourcePos }
+  | SimpleTypeSpecifierSigned { _simpleTypeSpecifierSignedPos :: SourcePos }
+  | SimpleTypeSpecifierUnsigned { _simpleTypeSpecifierUnsignedPos :: SourcePos }
+  | SimpleTypeSpecifierFloat { _simpleTypeSpecifierFloatPos :: SourcePos }
+  | SimpleTypeSpecifierDouble { _simpleTypeSpecifierDoublePos :: SourcePos }
+  | SimpleTypeSpecifierVoid { _simpleTypeSpecifierVoidPos :: SourcePos }
+  | SimpleTypeSpecifierAuto { _simpleTypeSpecifierAutoPos :: SourcePos }
+  | SimpleTypeSpecifierDecltype { _simpleTypeSpecifierDecltypePos :: SourcePos
+                                , _simpleTypeSpecifierDecltypeValue :: DecltypeSpecifier }
   deriving (Show, Eq)
 
 simpleTypeSpecifier :: P SimpleTypeSpecifier
 simpleTypeSpecifier = undefined
 
-data TypeName =
-  TypeName
+data TypeName
+  = TypeNameClass { _typeNameClassPos :: SourcePos
+                  , _typeNameClassValue :: ClassName }
+  | TypeNameEnum { _typeNameEnumPos :: SourcePos
+                 , _typeNameEnumValue :: EnumName }
+  | TypeNameTypedef { _typeNameTypedefPos :: SourcePos
+                    , _typeNameTypedefValue :: TypedefName }
+  | TypeNameTemplate { _typeNameTemplatePos :: SourcePos
+                     , _typeNameTemplateValue :: SimpleTemplateId }
   deriving (Show, Eq)
 
 typeName :: P TypeName
 typeName = undefined
 
-data DecltypeSpecifier =
-  DecltypeSpecifier
-  deriving (Show, Eq)
+data DecltypeSpecifier = DecltypeSpecifier
+  { _decltypeSpecifierPos :: SourcePos
+  , _decltypeSpecifierValue :: Expression
+  } deriving (Show, Eq)
 
 decltypeSpecifier :: P DecltypeSpecifier
 decltypeSpecifier = undefined
@@ -1301,8 +1390,20 @@ decltypeSpecifier = undefined
 --  	class-key attribute-specifier-seq[opt] ::opt nested-name-specifier[opt] identifier
 --  	class-key ::opt nested-name-specifier[opt] template[opt] simple-template-id
 --  	enum ::opt nested-name-specifier[opt] identifier
-data ElaboratedTypeSpecifier =
-  ElaboratedTypeSpecifier
+data ElaboratedTypeSpecifier
+  = ElaboratedTypeSpecifierId { _elaboratedTypeSpecifierIdPos :: SourcePos
+                              , _elaboratedTypeSpecifierIdClassKey :: ClassKey
+                              , _elaboratedTypeSpecifierIdAttributes :: [AttributeSpecifier]
+                              , _elaboratedTypeSpecifierIdNestedName :: Maybe NestedNameSpecifier
+                              , _elaboratedTypeSpecifierId :: Id }
+  | ElaboratedTypeSpecifierTemplate { _elaboratedTypeSpecifierTemplatePos :: SourcePos
+                                    , _elaboratedTypeSpecifierTemplateClassKey :: ClassKey
+                                    , _elaboratedTypeSpecifierTemplateNestedName :: Maybe NestedNameSpecifier
+                                    , _elaboratedTypeSpecifierHasTemplate :: Bool
+                                    , _elaboratedTypeSpecifierTemplateId :: SimpleTemplateId }
+  | ElaboratedTypeSpecifierEnum { _elaboratedTypeSpecifierEnumPos :: SourcePos
+                                , _elaboratedTypeSpecifierEnumNestedName :: Maybe NestedNameSpecifier
+                                , _elaboratedTypeSpecifierEnumId :: Id }
   deriving (Show, Eq)
 
 elaboratedTypeSpecifier :: P ElaboratedTypeSpecifier
