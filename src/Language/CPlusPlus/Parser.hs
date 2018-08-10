@@ -1538,16 +1538,18 @@ enumerator = undefined
 --  	inline[opt] namespace { namespace-body }
 -- namespace-body:
 --  	declaration-seq[opt]
-data NamespaceName =
-  NamespaceName
-  deriving (Show, Eq)
+data NamespaceName = NamespaceName
+  { _namespaceNamePos :: SourcePos
+  , _namespaceNameValue :: Either OriginalNamespaceName NamespaceAlias
+  } deriving (Show, Eq)
 
 namespaceName :: P NamespaceName
 namespaceName = undefined
 
-data OriginalNamespaceName =
-  OriginalNamespaceName
-  deriving (Show, Eq)
+data OriginalNamespaceName = OriginalNamespaceName
+  { _originalNamespaceNamePos :: SourcePos
+  , _originalNamespaceNameValue :: Id
+  } deriving (Show, Eq)
 
 originalNamespaceName :: P OriginalNamespaceName
 originalNamespaceName = undefined
@@ -1555,30 +1557,39 @@ originalNamespaceName = undefined
 namespaceDefinition :: P Declaration
 namespaceDefinition = undefined
 
-data NamedNamespaceDefinition =
-  NamedNamespaceDefinition
-  deriving (Show, Eq)
+data NamedNamespaceDefinition = NamedNamespaceDefinition
+  { _namedNamespaceDefinitionPos :: SourcePos
+  , _namedNamespaceDefinitionValue :: Either OriginalNamespaceDefinition ExtensionNamespaceDefinition
+  } deriving (Show, Eq)
 
 namedNamespaceDefinition :: P NamedNamespaceDefinition
 namedNamespaceDefinition = undefined
 
-data OriginalNamespaceDefinition =
-  OriginalNamespaceDefinition
-  deriving (Show, Eq)
+data OriginalNamespaceDefinition = OriginalNamespaceDefinition
+  { _originalNamespaceDefinitionPos :: SourcePos
+  , _originalNamespaceDefinitionIsInline :: Bool
+  , _originalNamespaceDefinitionId :: Id
+  , _originalNamespaceDefinitionBody :: [Declaration]
+  } deriving (Show, Eq)
 
 originalNamespaceDefinition :: P OriginalNamespaceDefinition
 originalNamespaceDefinition = undefined
 
-data ExtensionNamespaceDefinition =
-  ExtensionNamespaceDefinition
-  deriving (Show, Eq)
+data ExtensionNamespaceDefinition = ExtensionNamespaceDefinition
+  { _extensionNamespaceDefinitionPos :: SourcePos
+  , _extensionNamespaceDefinitionIsInline :: Bool
+  , _extensionNamespaceDefinitionOriginal :: OriginalNamespaceName
+  , _extensionNamespaceDefinitionBody :: [Declaration]
+  } deriving (Show, Eq)
 
 extensionNamespaceDefinition :: P ExtensionNamespaceDefinition
 extensionNamespaceDefinition = undefined
 
-data UnnamedNamespaceDefinition =
-  UnnamedNamespaceDefinition
-  deriving (Show, Eq)
+data UnnamedNamespaceDefinition = UnnamedNamespaceDefinition
+  { _unnamedNamespaceDefinitionPos :: SourcePos
+  , _unnamedNamespaceDefinitionIsInline :: Bool
+  , _unnamedNamespaceDefinitionBody :: [Declaration]
+  } deriving (Show, Eq)
 
 unnamedNamespaceDefinition :: P UnnamedNamespaceDefinition
 unnamedNamespaceDefinition = undefined
@@ -1593,9 +1604,10 @@ namespaceBody = undefined
 --  	namespace identifier = qualified-namespace-specifier ;
 -- qualified-namespace-specifier:
 --  	::opt nested-name-specifier[opt] namespace-name
-data NamespaceAlias =
-  NamespaceAlias
-  deriving (Show, Eq)
+data NamespaceAlias = NamespaceAlias
+  { _namespaceAliasPos :: SourcePos
+  , _namespaceAliasValue :: Id
+  } deriving (Show, Eq)
 
 namespaceAlias :: P NamespaceAlias
 namespaceAlias = undefined
@@ -1603,9 +1615,11 @@ namespaceAlias = undefined
 namespaceAliasDefinition :: P Declaration
 namespaceAliasDefinition = undefined
 
-data QualifiedNamespaceSpecifier =
-  QualifiedNamespaceSpecifier
-  deriving (Show, Eq)
+data QualifiedNamespaceSpecifier = QualifiedNamespaceSpecifier
+  { _qualifiedNamespaceSpecifierPos :: SourcePos
+  , _qualifiedNamespaceSpecifierNestedName :: Maybe NestedNameSpecifier
+  , _qualifiedNamespaceSpecifierName :: NamespaceName
+  } deriving (Show, Eq)
 
 qualifiedNamespaceSpecifier :: P QualifiedNamespaceSpecifier
 qualifiedNamespaceSpecifier = undefined
@@ -1673,58 +1687,75 @@ linkageSpecification = undefined
 attributeSpecifierSeq :: P [AttributeSpecifier]
 attributeSpecifierSeq = undefined
 
-data AttributeSpecifier =
-  AttributeSpecifier
+data AttributeSpecifier
+  = AttributeSpecifier { _attributeSpecifierPos :: SourcePos
+                       , _attributeSpecifierValue :: AttributeList }
+  | AlignmentAttribute { _alignmentAttributePos :: SourcePos
+                       , _alignmentAttributeValue :: AlignmentSpecifier }
   deriving (Show, Eq)
 
 attributeSpecifier :: P AttributeSpecifier
 attributeSpecifier = undefined
 
-data AlignmentSpecifier =
-  AlignmentSpecifier
+data AlignmentSpecifier
+  = AlignAsType { _alignAsTypePos :: SourcePos
+                , _alignAsTypeValue :: TypeId
+                , _alignAsTypeThreeDot :: Bool }
+  | AlignAsExpression { _alignAsExpressionPos :: SourcePos
+                      , _alignAsExpressionValue :: Expression
+                      , _alignAsExpressionThreeDot :: Bool }
   deriving (Show, Eq)
 
 alignmentSpecifier :: P AlignmentSpecifier
 alignmentSpecifier = undefined
 
-data AttributeList =
-  AttributeList
-  deriving (Show, Eq)
+data AttributeList = AttributeList
+  { _attributeListPos :: SourcePos
+  , _attributeListValue :: [Attribute]
+  , _attributeListThreeDot :: Bool
+  } deriving (Show, Eq)
 
 attributeList :: P AttributeList
 attributeList = undefined
 
-data Attribute =
-  Attribute
-  deriving (Show, Eq)
+data Attribute = Attribute
+  { _attributePos :: SourcePos
+  , _attributeToken :: AttributeToken
+  , _attributeArgumentClause :: Maybe AttributeArgumentClause
+  } deriving (Show, Eq)
 
 attribute :: P Attribute
 attribute = undefined
 
-data AttributeToken =
-  AttributeToken
-  deriving (Show, Eq)
+data AttributeToken = AttributeToken
+  { _attributeTokenPos :: SourcePos
+  , _attributeTokenValue :: Either Id AttributeScopedToken
+  } deriving (Show, Eq)
 
 attributeToken :: P AttributeToken
 attributeToken = undefined
 
-data AttributeScopedToken =
-  AttributeScopedToken
-  deriving (Show, Eq)
+data AttributeScopedToken = AttributeScopedToken
+  { _attributeScopedTokenPos :: SourcePos
+  , _attributeScopedTokenNamespace :: AttributeNamespace
+  , _attributeScopedTokenId :: Id
+  } deriving (Show, Eq)
 
 attributeScopedToken :: P AttributeScopedToken
 attributeScopedToken = undefined
 
-data AttributeNamespace =
-  AttributeNamespace
-  deriving (Show, Eq)
+data AttributeNamespace = AttributeNamespace
+  { _attributeNamespacePos :: SourcePos
+  , _attributeNamespaceValue :: Id
+  } deriving (Show, Eq)
 
 attributeNamespace :: P AttributeNamespace
 attributeNamespace = undefined
 
-data AttributeArgumentClause =
-  AttributeArgumentClause
-  deriving (Show, Eq)
+data AttributeArgumentClause = AttributeArgumentClause
+  { _attributeArgumentClausePos :: SourcePos
+  , _attributeArgumentClauseValue :: [BalancedToken]
+  } deriving (Show, Eq)
 
 attributeArgumentClause :: P AttributeArgumentClause
 attributeArgumentClause = undefined
@@ -1732,8 +1763,15 @@ attributeArgumentClause = undefined
 balancedTokenSeq :: P [BalancedToken]
 balancedTokenSeq = undefined
 
-data BalancedToken =
-  BalancedToken
+data BalancedToken
+  = ParencedTokenSeq { _parencedTokenSeqPos :: SourcePos
+                     , _parencedTokenSeqValue :: [BalancedToken] }
+  | SquaredTokenSeq { _squaredTokenSeqPos :: SourcePos
+                    , _squaredTokenSeqValue :: [BalancedToken] }
+  | BracedTokenSeq { _bracedTokenSeqPos :: SourcePos
+                   , _bracedTokenSeqValue :: [BalancedToken] }
+  | BalancedToken { _balancedTokenPos :: SourcePos
+                  , _balancedTokenValue :: CppToken }
   deriving (Show, Eq)
 
 balancedToken :: P BalancedToken
