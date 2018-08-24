@@ -205,19 +205,23 @@ data Expression
                        , _noexceptExpressionValue :: Expression }
   --  	::opt new new-placement[opt] new-type-id new-initializer[opt]
   | NewExpression { _newExpressionPos :: SourcePos
+                  , _newExpressionHasSquareDot :: Bool
                   , _newExpressionPlacement :: Maybe ExpressionList
                   , _newExpressionTypeId :: NewTypeId
                   , _newExpressionInitializer :: Maybe NewInitializer }
   --  	::opt new new-placement[opt] ( type-id ) new-initializer[opt]
   | NewParensedExpression { _newParensedExpressionPos :: SourcePos
+                          , _newParensedExpressionHasSquareDot :: Bool
                           , _newParensedExpressionPlacement :: Maybe ExpressionList
                           , _newParensedExpressionTypeId :: TypeId
                           , _newParensedExpressionInitializer :: Maybe NewInitializer }
   --  	::opt delete cast-expression
   | DeleteExpression { _deleteExpressionPos :: SourcePos
+                     , _deleteExpressionHasSquareDot :: Bool
                      , _deleteExpressionValue :: Expression }
   --  	::opt delete [ ] cast-expression
   | DeleteArrayExpression { _deleteArrayExpressionPos :: SourcePos
+                          , _deleteArrayExpressionHasSquareDot :: Bool
                           , _deleteArrayExpressionValue :: Expression }
   --  	( type-id ) cast-expression
   | CastExpression { _castExpressionPos :: SourcePos
@@ -291,6 +295,7 @@ data UnqualifiedId
 
 data QualifiedId
   = QualifiedIdNestedId { _qualifiedIdNestedIdPos         :: SourcePos
+                        , _qualifiedIdNestedIdHasSquareDot :: Bool
                         , _qualifiedIdNestedNameSpecifier :: NestedNameSpecifier
                         , _qualifiedIdNestedIdIsTemplate  :: Bool
                         , _qualifiedIdNestedUnqualifiedId :: UnqualifiedId }
@@ -462,16 +467,19 @@ expressionList = undefined
 data PseudoDestructorName
   --  	::opt nested-name-specifier[opt] type-name :: ~ type-name
   = PseudoDestructorNameNested { _pseudoDestructorNameNestedPos :: SourcePos
+                               , _pseudoDestructorNameNestedHasSquareDot :: Bool
                                , _pseudoDestructorNameNestedName :: Maybe NestedNameSpecifier
                                , _pseudoDestructorNameNestedType :: TypeName
                                , _pseudoDestructorNameNestedDestructorName :: TypeName }
   --  	::opt nested-name-specifier template simple-template-id :: ~ type-name     C++0x
   | PseudoDestructorNameTemplate { _pseudoDestructorNameTemplatePos :: SourcePos
+                                 , _pseudoDestructorNameTemplateHasSquareDot :: Bool
                                  , _pseudoDestructorNameTemplateNestedName :: NestedNameSpecifier
                                  , _pseudoDestructorNameTemplateId :: SimpleTemplateId
                                  , _pseudoDestructorNameTemplateType :: TypeName }
   --  	::opt nested-name-specifier[opt] ~ type-name
   | PseudoDestructorNameTypeName { _pseudoDestructorNameTypeNamePos :: SourcePos
+                                 , _pseudoDestructorNameTypeNameHasSquareDot :: Bool
                                  , _pseudoDestructorNameTypeNameNested :: NestedNameSpecifier
                                  , _pseudoDestructorNameTypeName :: TypeName }
   --  	~ decltype-specifier     C++0x
@@ -1060,6 +1068,7 @@ data Declaration
   --  	using typename[opt] ::opt nested-name-specifier unqualified-id ;
   | UsingNestedDeclaration { _usingNestedDeclarationPos :: SourcePos
                            , _usingNestedDeclarationTypename :: Maybe TypeName
+                           , _usingNestedDeclarationHasSquareDot :: Bool
                            , _usingNestedDeclarationNameSpecifier :: NestedNameSpecifier
                            , _usingNestedDeclarationId :: UnqualifiedId }
   --  	using :: unqualified-id ;
@@ -1069,6 +1078,7 @@ data Declaration
   --  	attribute-specifier-seq[opt] using namespace ::opt nested-name-specifier[opt] namespace-name ;
   | UsingDirective { _usingDirectivePos :: SourcePos
                    , _usingDirectiveAttributes :: [AttributeSpecifier]
+                   , _usingDirectiveHasSquareDot :: Bool
                    , _usingDirectiveNameSpecifier :: Maybe NestedNameSpecifier
                    , _usingDirectiveName :: NamespaceName }
   --  	static_assert-declaration     C++0x
@@ -1337,9 +1347,11 @@ trailingTypeSpecifierSeq = undefined
 --  	decltype ( expression )     C++0x
 data SimpleTypeSpecifier
   = SimpleTypeSpecifier { _simpleTypeSpecifierPos :: SourcePos
+                        , _simpleTypeSpecifierHasSquareDot :: Bool
                         , _simpleTypeSpecifierNestedName :: Maybe NestedNameSpecifier
                         , _simpleTypeSpecifierTypeName :: TypeName }
   | SimpleTypeSpecifierTemplate { _simpleTypeSpecifierTemplatePos :: SourcePos
+                                , _simpleTypeSpecifierTemplateHasSquareDot :: Bool
                                 , _simpleTypeSpecifierTemplateNestedName :: NestedNameSpecifier
                                 , _simpleTypeSpecifierTemplateId :: SimpleTemplateId }
   | SimpleTypeSpecifierChar { _simpleTypeSpecifierCharPos :: SourcePos}
@@ -1394,14 +1406,17 @@ data ElaboratedTypeSpecifier
   = ElaboratedTypeSpecifierId { _elaboratedTypeSpecifierIdPos :: SourcePos
                               , _elaboratedTypeSpecifierIdClassKey :: ClassKey
                               , _elaboratedTypeSpecifierIdAttributes :: [AttributeSpecifier]
+                              , _elaboratedTypeSpecifierIdHasSquareDot :: Bool
                               , _elaboratedTypeSpecifierIdNestedName :: Maybe NestedNameSpecifier
                               , _elaboratedTypeSpecifierId :: Id }
   | ElaboratedTypeSpecifierTemplate { _elaboratedTypeSpecifierTemplatePos :: SourcePos
                                     , _elaboratedTypeSpecifierTemplateClassKey :: ClassKey
+                                    , _elaboratedTypeSpecifierTemplateHasSquareDot :: Bool
                                     , _elaboratedTypeSpecifierTemplateNestedName :: Maybe NestedNameSpecifier
                                     , _elaboratedTypeSpecifierHasTemplate :: Bool
                                     , _elaboratedTypeSpecifierTemplateId :: SimpleTemplateId }
   | ElaboratedTypeSpecifierEnum { _elaboratedTypeSpecifierEnumPos :: SourcePos
+                                , _elaboratedTypeSpecifierEnumHasSquareDot :: Bool
                                 , _elaboratedTypeSpecifierEnumNestedName :: Maybe NestedNameSpecifier
                                 , _elaboratedTypeSpecifierEnumId :: Id }
   deriving (Show, Eq)
@@ -1617,6 +1632,7 @@ namespaceAliasDefinition = undefined
 
 data QualifiedNamespaceSpecifier = QualifiedNamespaceSpecifier
   { _qualifiedNamespaceSpecifierPos :: SourcePos
+  , _qualifiedNamespaceSpecifierHasSquareDot :: Bool
   , _qualifiedNamespaceSpecifierNestedName :: Maybe NestedNameSpecifier
   , _qualifiedNamespaceSpecifierName :: NamespaceName
   } deriving (Show, Eq)
