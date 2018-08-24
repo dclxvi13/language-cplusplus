@@ -1914,6 +1914,7 @@ data PtrOperator
   | DoubleRefOperator { _doubleRefOperatorPos :: SourcePos
                       , _doubleRefOperatorAttributes :: [AttributeSpecifier] }
   | NestedStarOperator { _nestedStarOperatorPos :: SourcePos
+                       , _nestedStarOperatorHasSquareDot :: Bool
                        , _nestedStarOperatorNestedName :: NestedNameSpecifier
                        , _nestedStarOperatorAttributes :: [AttributeSpecifier]
                        , _nestedStarOperatorQualifiers :: [CvQualifier] }
