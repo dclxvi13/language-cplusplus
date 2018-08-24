@@ -2156,30 +2156,46 @@ bracedInitList = undefined
 --  	class
 --  	struct
 --  	union
-data ClassName =
-  ClassName
+data ClassName
+  = ClassNameId { _classNameIdPos :: SourcePos
+                , _classNameIdValue :: Id }
+  | ClassNameTemplate { _classNameTemplatePos :: SourcePos
+                      , _classNameTemplateValue :: SimpleTemplateId }
   deriving (Show, Eq)
 
 className :: P ClassName
 className = undefined
 
-data ClassSpecifier =
-  ClassSpecifier
-  deriving (Show, Eq)
+data ClassSpecifier = ClassSpecifier
+  { _classSpecifierPos :: SourcePos
+  , _classSpecifierHead :: ClassHead
+  , _classSpecifierMembers :: Maybe MemberSpecification
+  } deriving (Show, Eq)
 
 classSpecifier :: P ClassSpecifier
 classSpecifier = undefined
 
-data ClassHead =
-  ClassHead
+data ClassHead
+  = ClassHead { _classHeadPos :: SourcePos
+              , _classHeadKey :: ClassKey
+              , _classHeadAttributes :: [AttributeSpecifier]
+              , _classHeadName :: ClassHeadName
+              , _classHeadVirtSpecifiers :: [ClassVirtSpecifier]
+              , _classHeadBaseClause :: Maybe BaseClause }
+  | OpaqueClassHead { _opaqueClassHeadPos :: SourcePos
+                    , _opaqueClassHeadKey :: ClassKey
+                    , _opaqueClassHeadAttributes :: [AttributeSpecifier]
+                    , _opaqueClassHeadBaseClause :: Maybe BaseClause }
   deriving (Show, Eq)
 
 classHead :: P ClassHead
 classHead = undefined
 
-data ClassHeadName =
-  ClassHeadName
-  deriving (Show, Eq)
+data ClassHeadName = ClassHeadName
+  { _classHeadNamePos :: SourcePos
+  , _classHeadNameNested :: Maybe NestedNameSpecifier
+  , _classHeadNameValue :: ClassName
+  } deriving (Show, Eq)
 
 classHeadName :: P ClassHeadName
 classHeadName = undefined
@@ -2187,16 +2203,22 @@ classHeadName = undefined
 classVirtSpecifierSeq :: P [ClassVirtSpecifier]
 classVirtSpecifierSeq = undefined
 
-data ClassVirtSpecifier =
-  ClassVirtSpecifier
-  deriving (Show, Eq)
+data ClassVirtSpecifier = ClassVirtSpecifier
+  { _classVirtSpecifierPos :: SourcePos
+  , _classVirtSpecifierValue :: ClassVirtSpecifierType
+  } deriving (Show, Eq)
+
+data ClassVirtSpecifierType = Final | Explicit
 
 classVirtSpecifier :: P ClassVirtSpecifier
 classVirtSpecifier = undefined
 
-data ClassKey =
-  ClassKey
-  deriving (Show, Eq)
+data ClassKey = ClassKey
+  { _classKeyPos :: SourcePos
+  , _classKeyValue :: ClassKeyType
+  } deriving (Show, Eq)
+
+data ClassKeyType = Class | Struct | Union deriving (Show, Eq)
 
 classKey :: P ClassKey
 classKey = undefined
@@ -2228,15 +2250,39 @@ classKey = undefined
 --  	new
 -- pure-specifier:
 --  	= 0
-data MemberSpecification =
-  MemberSpecification
+data MemberSpecification
+  = MemberSpecification { _memberSpecificationPos :: SourcePos
+                        , _memberSpecificationValue :: MemberDeclaration
+                        , _memberSpecificationRest :: Maybe MemberSpecification }
+  | AccessSpecifiedMemberSpecification { _accessSpecifiedMemberSpecificationPos :: SourcePos
+                                       , _accessSpecifiedMemberSpecificationSpecifier :: AccessSpecifier
+                                       , _accessSpecifiedMemberSpecificationRest :: Maybe MemberSpecification }
   deriving (Show, Eq)
 
 memberSpecification :: P MemberSpecification
 memberSpecification = undefined
 
-data MemberDeclaration =
-  MemberDeclaration
+data MemberDeclaration
+  --  	attribute-specifier-seq[opt] decl-specifier-seq[opt] member-declarator-list[opt] ;     C++0x
+  = SimpleMemberDeclaration { _simpleMemberDeclarationPos :: SourcePos
+                            , _simpleMemberDeclarationDeclSpecifiers :: Maybe DeclSpecifierSeq
+                            , _simpleMemberDeclarationList :: [MemberDeclarator] }
+  --  	function-definition ;[opt]
+  | FunctionMemberDeclaration { _functionMemberDeclarationPos :: SourcePos
+                              , _functionMemberDeclarationValue :: Declaration
+                              , _functionMemberDeclarationHasTrailingSemicolon :: Bool }
+  --  	using-declaration
+  | UsingMemberDeclaration { _usingMemberDeclarationPos :: SourcePos
+                           , _usingMemberDeclarationValue :: Declaration }
+  --  	static_assert-declaration     C++0x
+  | StaticAssertMemberDeclaration { _staticAssertMemberDeclarationPos :: SourcePos
+                                  , _staticAssertMemberDeclarationValue :: Declaration }
+  --  	template-declaration
+  | TemplateMemberDeclaration { _templateMemberDeclarationPos :: SourcePos
+                              , _templateMemberDeclarationValue :: Declaration }
+  --  	alias-declaration     C++0x
+  | AliasMemberDeclaration { _aliasMemberDeclarationPos :: SourcePos
+                           , _aliasMemberDeclarationValue :: Declaration }
   deriving (Show, Eq)
 
 memberDeclaration :: P MemberDeclaration
@@ -2245,8 +2291,23 @@ memberDeclaration = undefined
 memberDeclaratorList :: P [MemberDeclarator]
 memberDeclaratorList = undefined
 
-data MemberDeclarator =
-  MemberDeclarator
+data MemberDeclarator
+  --  	declarator virt-specifier-seq[opt] pure-specifier[opt]
+  = MemberDeclarator { _memberDeclaratorPos :: SourcePos
+                     , _memberDeclaratorValue :: Declarator
+                     , _memberDeclaratorSpecifiers :: [VirtSpecifier]
+                     , _memberDeclaratorPure :: Maybe PureSpecifier }
+  --  	declarator virt-specifier-seq[opt] brace-or-equal-initializer[opt]     C++0x
+  | InitializedMemberDeclarator { _initializedMemberDeclaratorPos :: SourcePos
+                                , _initializedMemberDeclaratorValue :: Declarator
+                                , _initializedMemberDeclaratorSpecifiers :: [VirtSpecifier]
+                                , _initializedMemberDeclaratorInitializer :: Maybe BraceOrEqualInitializer }
+  --  	identifier[opt] attribute-specifier-seq[opt] virt-specifier-seq[opt] : constant-expression
+  | ExpressionMemberDeclarator { _expressionMemberDeclaratorPos :: SourcePos
+                               , _expressionMemberDeclaratorId :: Maybe Id
+                               , _expressionMemberDeclaratorAttributes :: [AttributeSpecifier]
+                               , _expressionMemberDeclaratorSpecifiers :: [VirtSpecifier]
+                               , _expressionMemberDeclaratorValue :: Expression }
   deriving (Show, Eq)
 
 memberDeclarator :: P MemberDeclarator
@@ -2255,16 +2316,19 @@ memberDeclarator = undefined
 virtSpecifierSeq :: P [VirtSpecifier]
 virtSpecifierSeq = undefined
 
-data VirtSpecifier =
-  VirtSpecifier
-  deriving (Show, Eq)
+data VirtSpecifier = VirtSpecifier
+  { _virtSpecifierPos :: SourcePos
+  , _virtSpecifierValue :: VirtSpecifierType
+  } deriving (Show, Eq)
+
+data VirtSpecifierType = Final | Override | New deriving (Show, Eq)
 
 virtSpecifier :: P VirtSpecifier
 virtSpecifier = undefined
 
-data PureSpecifier =
-  PureSpecifier
-  deriving (Show, Eq)
+data PureSpecifier = PureSpecifier
+  { _pureSpecifierPos :: SourcePos
+  } deriving (Show, Eq)
 
 pureSpecifier :: P PureSpecifier
 pureSpecifier = undefined
@@ -2288,44 +2352,70 @@ pureSpecifier = undefined
 --  	private
 --  	protected
 --  	public
-data BaseClause =
-  BaseClause
-  deriving (Show, Eq)
+data BaseClause = BaseClause
+  { _baseClausePos :: SourcePos
+  , _baseClauseList :: BaseSpecifierList
+  } deriving (Show, Eq)
 
 baseClause :: P BaseClause
 baseClause = undefined
 
-data BaseSpecifierList =
-  BaseSpecifierList
-  deriving (Show, Eq)
+data BaseSpecifierList = BaseSpecifierList
+  { _baseSpecifierListPos :: SourcePos
+  , _baseSpecifierListValue :: [BaseSpecifier]
+  , _baseSpecifierListHasThreeDots :: Bool
+  } deriving (Show, Eq)
 
 baseSpecifierList :: P BaseSpecifierList
 baseSpecifierList = undefined
 
-data BaseSpecifier =
-  BaseSpecifier
+data BaseSpecifier
+  --  	attribute-specifier-seq[opt] base-type-specifier     C++0x
+  = BaseSpecifier { _baseSpecifierPos :: SourcePos
+                  , _baseSpecifierAttributes :: [AttributeSpecifier]
+                  , _baseSpecifierValue :: BaseTypeSpecifier }
+  --  	attribute-specifier-seq[opt] virtual access-specifier[opt] base-type-specifier     C++0x
+  | VirtualBaseSpecifier { _virtualBaseSpecifierPos :: SourcePos
+                         , _virtualBaseSpecifierAttributes :: [AttributeSpecifier]
+                         , _virtualBaseSpecifierAccessSpecifier :: Maybe AccessSpecifier
+                         , _virtualBaseSpecifierValue :: BaseTypeSpecifier }
+  --  	attribute-specifier-seq[opt] access-specifier virtual[opt] base-type-specifier     C++0x
+  | AccessSpecBaseSpecifier { _accessSpecBaseSpecifierPos :: SourcePos
+                            , _accessSpecBaseSpecifierAttributes :: [AttributeSpecifier]
+                            , _accessSpecBaseSpecifierAccessSpecifier :: AccessSpecifier
+                            , _accessSpecBaseSpecifierIsVirtual :: Bool
+                            , _accessSpecBaseSpecifierValue :: BaseTypeSpecifier }
   deriving (Show, Eq)
 
 baseSpecifier :: P BaseSpecifier
 baseSpecifier = undefined
 
-data ClassOrDecltype =
-  ClassOrDecltype
+data ClassOrDecltype
+  = ClassOrDecltypeFirst { _classOrDecltypeFirstPos :: SourcePos
+                         , _classOrDecltypeFirstHasSquareDot :: Bool
+                         , _classOrDecltypeFirstNestedSpecifier :: Maybe NestedNameSpecifier
+                         , _classOrDecltypeFirstValue :: ClassName }
+  | ClassOrDecltypeSecond { _classOrDecltypeSecondPos :: SourcePos
+                          , _classOrDecltypeSecondValue :: DecltypeSpecifier }
   deriving (Show, Eq)
 
 classOrDecltype :: P ClassOrDecltype
 classOrDecltype = undefined
 
-data BaseTypeSpecifier =
-  BaseTypeSpecifier
-  deriving (Show, Eq)
+data BaseTypeSpecifier = BaseTypeSpecifier
+  { _baseTypeSpecifierPos :: SourcePos
+  , _baseTypeSpecifierValue :: ClassOrDecltype
+  } deriving (Show, Eq)
 
 baseTypeSpecifier :: P BaseTypeSpecifier
 baseTypeSpecifier = undefined
 
-data AccessSpecifier =
-  AccessSpecifier
-  deriving (Show, Eq)
+data AccessSpecifier = AccessSpecifier
+  { _accessSpecifierPos :: SourcePos
+  , _accessSpecifierValue :: AccessSpecifierType
+  } deriving (Show, Eq)
+
+data AccessSpecifierType = Public | Protected | Private deriving (Show, Eq)
 
 accessSpecifier :: P AccessSpecifier
 accessSpecifier = undefined
@@ -2337,23 +2427,28 @@ accessSpecifier = undefined
 --  	type-specifier-seq conversion-declarator[opt]
 -- conversion-declarator:
 --  	ptr-operator conversion-declarator[opt]
-data ConversionFunctionId =
-  ConversionFunctionId
-  deriving (Show, Eq)
+data ConversionFunctionId = ConversionFunctionId
+  { _conversionFunctionIdPos :: SourcePos
+  , _conversionFunctionIdTypeId :: ConversionTypeId
+  } deriving (Show, Eq)
 
 conversionFunctionId :: P ConversionFunctionId
 conversionFunctionId = undefined
 
-data ConversionTypeId =
-  ConversionTypeId
-  deriving (Show, Eq)
+data ConversionTypeId = ConversionTypeId
+  { _conversionTypeIdPos :: SourcePos
+  , _conversionTypeIdSpecifiers :: TypeSpecifierSeq
+  , _conversionTypeIdDeclarator :: Maybe ConversionDeclarator
+  } deriving (Show, Eq)
 
 conversionTypeId :: P ConversionTypeId
 conversionTypeId = undefined
 
-data ConversionDeclarator =
-  ConversionDeclarator
-  deriving (Show, Eq)
+data ConversionDeclarator = ConversionDeclarator
+  { _conversionDeclaratorPos :: SourcePos
+  , _conversionDeclaratorOperator :: PtrOperator
+  , _conversionDeclaratorrest :: Maybe ConversionDeclarator
+  } deriving (Show, Eq)
 
 conversionDeclarator :: P ConversionDeclarator
 conversionDeclarator = undefined
@@ -2370,30 +2465,39 @@ conversionDeclarator = undefined
 -- mem-initializer-id:
 --  	class-or-decltype
 --  	identifier
-data CtorInitializer =
-  CtorInitializer
-  deriving (Show, Eq)
+data CtorInitializer = CtorInitializer
+  { _ctorInitializerPos :: SourcePos
+  , _ctorInitializerList :: MemInitializerList
+  } deriving (Show, Eq)
 
 ctorInitializer :: P CtorInitializer
 ctorInitializer = undefined
 
-data MemInitializerList =
-  MemInitializerList
-  deriving (Show, Eq)
+data MemInitializerList = MemInitializerList
+  { _memInitializerListPos :: SourcePos
+  , _memInitializerListValue :: [MemInitializer]
+  , _memInitializerListHasThreeDots :: Bool
+  } deriving (Show, Eq)
 
 memInitializerList :: P MemInitializerList
 memInitializerList = undefined
 
-data MemInitializer =
-  MemInitializer
+data MemInitializer
+  = MemInitializerExpression { _memInitializerExpressionPos :: SourcePos
+                             , _memInitializerExpressionId :: MemInitializerId
+                             , _memInitializerExpressionValue :: Maybe ExpressionList }
+  | MemInitializerBracedList { _memInitializerBracedListPos :: SourcePos
+                             , _memInitializerBracedListId :: MemInitializerId
+                             , _memInitializerBracedListValue :: BracedInitList }
   deriving (Show, Eq)
 
 memInitializer :: P MemInitializer
 memInitializer = undefined
 
-data MemInitializerId =
-  MemInitializerId
-  deriving (Show, Eq)
+data MemInitializerId = MemInitializerId
+  { _memInitializerIdPos :: SourcePos
+  , _memInitializerIdValue :: Either ClassOrDecltype Id
+  } deriving (Show, Eq)
 
 memInitializerId :: P MemInitializerId
 memInitializerId = undefined
@@ -2445,15 +2549,65 @@ memInitializerId = undefined
 --  	->
 --  	()
 --  	[]
-data OperatorFunctionId =
-  OperatorFunctionId
+data OperatorFunctionId
+  = OperatorFunctionId { _operatorFunctionIdPos :: SourcePos
+                       , _operatorFunctionIdValue :: OverloadableOperator }
+  | TemplateOperatorFunctionId { _templateOperatorFunctionIdPos :: SourcePos
+                               , _templateOperatorFunctionIdValue :: OverloadableOperator
+                               , _templateOperatorFunctionIdArguments :: Maybe TemplateArgumentList }
   deriving (Show, Eq)
 
 operatorFunctionId :: P OperatorFunctionId
 operatorFunctionId = undefined
 
-data OverloadableOperator =
-  OverloadableOperator
+data OverloadableOperator = OverloadableOperator
+  { _overloadableOperatorPos :: SourcePos
+  , _overloadableOperatorValue :: OverloadableOperatorType
+  } deriving (Show, Eq)
+
+data OverloadableOperatorType
+  = OperatorNew
+  | OperatorDelete
+  | OperatorNewArray
+  | OperatorDeleteArray
+  | OperatorPlus
+  | OperatorMinus
+  | OperatorMultiply
+  | OperatorDivide
+  | OperatorRem
+  | OperatorBitAnd
+  | OperatorBitXor
+  | OperatorBitOr
+  | OperatorBitNot
+  | OperatorLogicalNot
+  | OperatorAssign
+  | OperatorGreater
+  | OperatorLess
+  | OperatorAddAssign
+  | OperatorSubAssign
+  | OperatorMulAssign
+  | OperatorDivAssign
+  | OperatorRemAssign
+  | OperatorBitXorAssign
+  | OperatorBitAndAssign
+  | OperatorBitOrAssign
+  | OperatorLeftShift
+  | OperatorRightShift
+  | OperatorLeftShiftAssign
+  | OperatorRightShiftAssign
+  | OperatorEqual
+  | OperatorNotEqual
+  | OperatorLessOrEqual
+  | OperatorGreaterOrEqual
+  | OperatorLogicalAnd
+  | OperatorLogicalOr
+  | OperatorIncrement
+  | OperatorDecrement
+  | OperatorComma
+  | OperatorAccess
+  | OperatorAccessPtr
+  | OperatorCall
+  | OperatorIndex
   deriving (Show, Eq)
 
 overloadableOperator :: P OverloadableOperator
@@ -2462,9 +2616,10 @@ overloadableOperator = undefined
 -- over.literal
 -- literal-operator-id:
 --  	operator "" identifier     C++0x
-data LiteralOperatorId =
-  LiteralOperatorId
-  deriving (Show, Eq)
+data LiteralOperatorId = LiteralOperatorId
+  { _literalOperatorIdPos :: SourcePos
+  , _literalOperatorIdValue :: Id
+  } deriving (Show, Eq)
 
 literalOperatorId :: P LiteralOperatorId
 literalOperatorId = undefined
