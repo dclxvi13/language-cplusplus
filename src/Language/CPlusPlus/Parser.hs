@@ -1818,50 +1818,89 @@ balancedToken = undefined
 initDeclaratorList :: P [InitDeclarator]
 initDeclaratorList = undefined
 
-data InitDeclarator =
-  InitDeclarator
-  deriving (Show, Eq)
+data InitDeclarator = InitDeclarator
+  { _initDeclaratorPos :: SourcePos
+  , _initDeclaratorValue :: Declarator
+  , _initDeclaratorInitializer :: Maybe Initializer
+  } deriving (Show, Eq)
 
 initDeclarator :: P InitDeclarator
 initDeclarator = undefined
 
-data Declarator =
-  Declarator
+data Declarator
+  = DeclaratorPtr { _declaratorPtrPos :: SourcePos
+                  , _declaratorPtrValue :: PtrDeclarator }
+  | DeclaratorNoptr { _declaratorNoptrPos :: SourcePos
+                    , _declaratorNoptrValue :: NoptrDeclarator
+                    , _declaratorNoptrParameters :: ParametersAndQualifiers
+                    , _declaratorNoptrReturnType :: TrailingReturnType }
   deriving (Show, Eq)
 
 declarator :: P Declarator
 declarator = undefined
 
-data PtrDeclarator =
-  PtrDeclarator
+data PtrDeclarator
+  = PtrDeclaratorNoptr { _ptrDeclaratorNoptrPos :: SourcePos
+                       , _ptrDeclaratorNoptrValue :: NoptrDeclarator }
+  | PtrDeclarator { _ptrDeclaratorPos :: SourcePos
+                  , _ptrDeclaratorOperator :: PtrOperator
+                  , _ptrDeclaratorValue :: PtrDeclarator }
   deriving (Show, Eq)
 
 ptrDeclarator :: P PtrDeclarator
 ptrDeclarator = undefined
 
-data NoptrDeclarator =
-  NoptrDeclarator
+data NoptrDeclarator
+  = NoptrDeclarator { _noptrDeclaratorPos :: SourcePos
+                    , _noptrDeclaratorValue :: DeclaratorId
+                    , _noptrDeclaratorAttributes :: [AttributeSpecifier] }
+  | NoptrDeclaratorParametred { _noptrDeclaratorParametredPos :: SourcePos
+                              , _noptrDeclaratorParametredValue :: NoptrDeclarator
+                              , _noptrDeclaratorParameters :: ParametersAndQualifiers }
+  | NoptrDeclaratorIndexed { _noptrDeclaratorIndexedPos :: SourcePos
+                           , _noptrDeclaratorIndexedValue :: NoptrDeclarator
+                           , _noptrDeclaratorIndex :: Expression
+                           , _noptrDeclaratorIndexedAttributes :: [AttributeSpecifier] }
+  | NoptrDeclaratorParenced { _noptrDeclaratorParencedPos :: SourcePos
+                            , _noptrDeclaratorParencedValue :: PtrDeclarator }
   deriving (Show, Eq)
 
 noptrDeclarator :: P NoptrDeclarator
 noptrDeclarator = undefined
 
-data ParametersAndQualifiers =
-  ParametersAndQualifiers
-  deriving (Show, Eq)
+data ParametersAndQualifiers = ParametersAndQualifiers
+  { _parametersAndQualifiersPos :: SourcePos
+  , _parametersAndQualifiersParameterDeclarations :: ParameterDeclarationClause
+  , _parametersAndQualifiersAttributes :: [AttributeSpecifier]
+  , _parametersAndQualifiersCv :: [CvQualifier]
+  , _parametersAndQualifiersRef :: Maybe RefQualifier
+  , _parametersAndQualifiersException :: Maybe ExceptionSpecification
+  } deriving (Show, Eq)
 
 parametersAndQualifiers :: P ParametersAndQualifiers
 parametersAndQualifiers = undefined
 
-data TrailingReturnType =
-  TrailingReturnType
-  deriving (Show, Eq)
+data TrailingReturnType = TrailingReturnType
+  { _trailingReturnType :: SourcePos
+  , _trailingReturnTypeSpecifier :: TrailingTypeSpecifierSeq
+  , _trailingReturnTypeDeclarator :: Maybe AbstractDeclarator
+  } deriving (Show, Eq)
 
 trailingReturnType :: P TrailingReturnType
 trailingReturnType = undefined
 
-data PtrOperator =
-  PtrOperator
+data PtrOperator
+  = StarOperator { _starOperatorPos :: SourcePos
+                 , _starOperatorAttributes :: [AttributeSpecifier]
+                 , _starOperatorQualifiers :: [CvQualifier] }
+  | RefOperator { _refOperatorPos :: SourcePos
+                , _refOperatorAttributes :: [AttributeSpecifier] }
+  | DoubleRefOperator { _doubleRefOperatorPos :: SourcePos
+                      , _doubleRefOperatorAttributes :: [AttributeSpecifier] }
+  | NestedStarOperator { _nestedStarOperatorPos :: SourcePos
+                       , _nestedStarOperatorNestedName :: NestedNameSpecifier
+                       , _nestedStarOperatorAttributes :: [AttributeSpecifier]
+                       , _nestedStarOperatorQualifiers :: [CvQualifier] }
   deriving (Show, Eq)
 
 ptrOperator :: P PtrOperator
@@ -1870,22 +1909,30 @@ ptrOperator = undefined
 cvQualifierSeq :: P [CvQualifier]
 cvQualifierSeq = undefined
 
-data CvQualifier =
-  CvQualifier
+data CvQualifier
+  = ConstQualifier { _constQualifierPos :: SourcePos }
+  | VolatileQualifier { _volatileQualifierPos :: SourcePos }
   deriving (Show, Eq)
 
 cvQualifier :: P CvQualifier
 cvQualifier = undefined
 
-data RefQualifier =
-  RefQualifier
+data RefQualifier
+  = RefQualifier { _refQualifierPos :: SourcePos }
+  | RefQualifierDouble { _refQualifierDoublePos :: SourcePos }
   deriving (Show, Eq)
 
 refQualifier :: P RefQualifier
 refQualifier = undefined
 
-data DeclaratorId =
-  DeclaratorId
+data DeclaratorId
+  = DeclaratorIdExpression { _declaratorIdExpressionPos :: SourcePos
+                           , _declaratorIdExpressionHasThreeDot :: Bool
+                           , _declaratorIdExpressionValue :: Expression }
+  | DeclaratorIdClass { _declaratorIdClassPos :: SourcePos
+                      , _declaratorIdClassHasSquareDot :: Bool
+                      , _declaratorIdClassNestedName :: Maybe NestedNameSpecifier
+                      , _declaratorIdClassName :: ClassName }
   deriving (Show, Eq)
 
 declaratorId :: P DeclaratorId
