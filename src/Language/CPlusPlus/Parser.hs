@@ -1952,29 +1952,49 @@ declaratorId = undefined
 --  	noptr-abstract-declarator[opt] parameters-and-qualifiers     C++0x
 --  	noptr-abstract-declarator[opt] [ constant-expression ] attribute-specifier-seq[opt]     C++0x
 --  	( ptr-abstract-declarator )     C++0x
-data TypeId =
-  TypeId
-  deriving (Show, Eq)
+data TypeId = TypeId
+  { _typeIdPos :: SourcePos
+  , _typeIdSpecifiers :: TypeSpecifierSeq
+  , _typeIdDeclarator :: Maybe AbstractDeclarator
+  } deriving (Show, Eq)
 
 typeId :: P TypeId
 typeId = undefined
 
-data AbstractDeclarator =
-  AbstractDeclarator
+data AbstractDeclarator
+  = AbstractDeclaratorPtr { _abstractDeclaratorPtrPos :: SourcePos
+                          , _abstractDeclaratorPtrValue :: PtrAbstractDeclarator }
+  | AbstractDeclaratorNoptr { _abstractDeclaratorNoptrPos :: SourcePos
+                            , _abstractDeclaratorNoptrValue :: Maybe NoptrAbstractDeclarator
+                            , _abstractDeclaratorNoptrParameters :: ParametersAndQualifiers
+                            , _abstractDeclaratorNoptrTralingReturnType :: TrailingReturnType }
+  | AbstractDeclaratorThreeDot { _abstractDeclaratorThreeDotPos :: SourcePos }
   deriving (Show, Eq)
 
 abstractDeclarator :: P AbstractDeclarator
 abstractDeclarator = undefined
 
-data PtrAbstractDeclarator =
-  PtrAbstractDeclarator
+data PtrAbstractDeclarator
+  = PtrAbstractDeclaratorNoptr { _ptrAbstractDeclaratorNoptrPos :: SourcePos
+                               , _ptrAbstractDeclaratorNoptrValue :: NoptrAbstractDeclarator }
+  | PtrAbstractDeclarator { _ptrAbstractDeclaratorPos :: SourcePos
+                          , _ptrAbstractDeclaratorOperator :: PtrOperator
+                          , _ptrAbstractDeclaratorValue :: Maybe PtrAbstractDeclarator }
   deriving (Show, Eq)
 
 ptrAbstractDeclarator :: P PtrAbstractDeclarator
 ptrAbstractDeclarator = undefined
 
-data NoptrAbstractDeclarator =
-  NoptrAbstractDeclarator
+data NoptrAbstractDeclarator
+  = NoptrAbstractDeclarator { _noptrAbstractDeclaratorPos :: SourcePos
+                            , _noptrAbstractDeclaratorPref :: Maybe NoptrAbstractDeclarator
+                            , _noptrAbstractDeclaratorParameters :: ParametersAndQualifiers }
+  | ArrayNoptrAbstractDeclarator { _arrayNoptrAbstractDeclaratorPos :: SourcePos
+                                 , _arrayNoptrAbstractDeclaratorPref :: Maybe NoptrAbstractDeclarator
+                                 , _arrayNoptrAbstractDeclaratorExpression :: Expression
+                                 , _arrayNoptrAbstractDeclaratorAttributes :: [AttributeSpecifier] }
+  | ParensedPtrAbstractDeclarator { _parensedPtrAbstractDeclaratorPos :: SourcePos
+                                  , _parensedPtrAbstractDeclaratorValue :: PtrAbstractDeclarator }
   deriving (Show, Eq)
 
 noptrAbstractDeclarator :: P NoptrAbstractDeclarator
@@ -1992,9 +2012,11 @@ noptrAbstractDeclarator = undefined
 --  	attribute-specifier-seq[opt] decl-specifier-seq declarator = initializer-clause     C++0x
 --  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt]     C++0x
 --  	attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt] = initializer-clause     C++0x
-data ParameterDeclarationClause =
-  ParameterDeclarationClause
-  deriving (Show, Eq)
+data ParameterDeclarationClause = ParameterDeclarationClause
+  { _parameterDeclarationClausePos :: SourcePos
+  , _parameterDeclarationClauseList :: [ParameterDeclaration]
+  , _parameterDeclarationClauseHasThreeDots :: Bool
+  } deriving (Show, Eq)
 
 parameterDeclarationClause :: P ParameterDeclarationClause
 parameterDeclarationClause = undefined
@@ -2002,8 +2024,25 @@ parameterDeclarationClause = undefined
 parameterDeclarationList :: P [ParameterDeclaration]
 parameterDeclarationList = undefined
 
-data ParameterDeclaration =
-  ParameterDeclaration
+data ParameterDeclaration
+  = ParameterDeclaration { _parameterDeclarationPos :: SourcePos
+                         , _parameterDeclarationAttributes :: [AttributeSpecifier]
+                         , _parameterDeclarationDeclSpecifiers :: DeclSpecifierSeq
+                         , _parameterDeclarationDeclarator :: Declarator }
+  | ParameterDeclarationInitialized { _parameterDeclarationInitializedPos :: SourcePos
+                                    , _parameterDeclarationInitializedAttributes :: [AttributeSpecifier]
+                                    , _parameterDeclarationInitializedDeclSpecifiers :: DeclSpecifierSeq
+                                    , _parameterDeclarationInitializedDeclarator :: Declarator
+                                    , _parameterDeclarationInitializedInitializers :: InitializerClause }
+  | AbstractParameterDeclaration { _abstractParameterDeclarationPos :: SourcePos
+                                 , _abstractParameterDeclarationAttributes :: [AttributeSpecifier]
+                                 , _abstractParameterDeclarationDeclSpecifiers :: DeclSpecifierSeq
+                                 , _abstractParameterDeclarationDeclarator :: Maybe AbstractDeclarator }
+  | AbstractParameterDeclarationInitialized { _abstractParameterDeclarationInitializedPos :: SourcePos
+                                            , _abstractParameterDeclarationInitializedAttributes :: [AttributeSpecifier]
+                                            , _abstractParameterDeclarationInitializedDeclSpecifiers :: DeclSpecifierSeq
+                                            , _abstractParameterDeclarationInitializedDeclarator :: Maybe AbstractDeclarator
+                                            , _abstractParameterDeclarationInitializedInitializers :: InitializerClause }
   deriving (Show, Eq)
 
 parameterDeclaration :: P ParameterDeclaration
@@ -2020,8 +2059,12 @@ parameterDeclaration = undefined
 functionDefinition :: P Declaration
 functionDefinition = undefined
 
-data FunctionBody =
-  FunctionBody
+data FunctionBody
+  = CtorBody { _ctorBodyPos :: SourcePos
+             , _ctorBodyInitializer :: Maybe CtorInitializer
+             , _ctorBodyValue :: Statement }
+  | FunctionBody { _functionBodyPos :: SourcePos
+                 , _functionBodyValue :: FunctionTryBlock }
   deriving (Show, Eq)
 
 functionBody :: P FunctionBody
@@ -2043,36 +2086,50 @@ functionBody = undefined
 -- braced-init-list:
 --  	{ initializer-list ,opt }     C++0x
 --  	{ }     C++0x
-data Initializer =
-  Initializer
+data Initializer
+  = Initializer { _initializerPos :: SourcePos
+                , _initializerValue :: BraceOrEqualInitializer }
+  | ParensedExpressionList { _parensedExpressionListPos :: SourcePos
+                           , _parensedExpressionListValue :: ExpressionList }
   deriving (Show, Eq)
 
 initializer :: P Initializer
 initializer = undefined
 
-data BraceOrEqualInitializer =
-  BraceOrEqualInitializer
+data BraceOrEqualInitializer
+  = EqualInitializer { _equalInitializerPos :: SourcePos
+                     , _equalInitializerValue :: InitializerClause }
+  | BraceInitializer { _braceInitializerPos :: SourcePos
+                     , _braceInitializerValue :: BracedInitList }
   deriving (Show, Eq)
 
 braceOrEqualInitializer :: P BraceOrEqualInitializer
 braceOrEqualInitializer = undefined
 
-data InitializerClause =
-  InitializerClause
+data InitializerClause
+  = ExpressionInitializerClause { _expressionInitializerClausePos :: SourcePos
+                                , _expressionInitializerClauseValue :: Expression }
+  | ListInitializerClause { _listInitializerClausePos :: SourcePos
+                          , _listInitializerClauseValue :: BracedInitList }
   deriving (Show, Eq)
 
 initializerClause :: P InitializerClause
 initializerClause = undefined
 
-data InitializerList =
-  InitializerList
-  deriving (Show, Eq)
+data InitializerList = InitializerList
+  { _initializerListPos :: SourcePos
+  , _initializerListClauses :: [InitializerClause]
+  , _initializerListHasThreeDots :: Bool
+  } deriving (Show, Eq)
 
 initializerList :: P InitializerList
 initializerList = undefined
 
-data BracedInitList =
-  BracedInitList
+data BracedInitList
+  = BracedInitList { _bracedInitListPos :: SourcePos
+                   , _bracedInitListValue :: InitializerList
+                   , _bracedInitListHasTrailingComma :: Bool }
+  | EmptyBracedInitList { _emptyBracedInitListPos :: SourcePos }
   deriving (Show, Eq)
 
 bracedInitList :: P BracedInitList
