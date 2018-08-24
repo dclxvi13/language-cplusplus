@@ -2800,16 +2800,21 @@ explicitSpecialization = undefined
 --  	...     C++0x
 -- throw-expression:
 --  	throw assignment-expression[opt]
-data TryBlock =
-  TryBlock
-  deriving (Show, Eq)
+data TryBlock = TryBlock
+  { _tryBlockPos :: SourcePos
+  , _tryBlockCompound :: Statement
+  , _tryBlockHandlers :: [Handler]
+  } deriving (Show, Eq)
 
 tryBlock :: P TryBlock
 tryBlock = undefined
 
-data FunctionTryBlock =
-  FunctionTryBlock
-  deriving (Show, Eq)
+data FunctionTryBlock = FunctionTryBlock
+  { _functionTryBlockPos :: SourcePos
+  , _functionTryBlockCtorInitializer :: Maybe CtorInitializer
+  , _functionTryBlockCompound :: Statement
+  , _functionTryBlockHandlers :: [Handler]
+  } deriving (Show, Eq)
 
 functionTryBlock :: P FunctionTryBlock
 functionTryBlock = undefined
@@ -2817,15 +2822,25 @@ functionTryBlock = undefined
 handlerSeq :: P [Handler]
 handlerSeq = undefined
 
-data Handler =
-  Handler
-  deriving (Show, Eq)
+data Handler = Handler
+  { _handlerPos :: SourcePos
+  , _handlerDeclaration :: ExceptionDeclaration
+  , _handlerCompound :: Statement
+  } deriving (Show, Eq)
 
 handler :: P Handler
 handler = undefined
 
-data ExceptionDeclaration =
-  ExceptionDeclaration
+data ExceptionDeclaration
+  = ExceptionDeclaration { _exceptionDeclarationPos :: SourcePos
+                         , _exceptionDeclarationAttributes :: [AttributeSpecifier]
+                         , _exceptionDeclarationTypeSpecifiers :: TypeSpecifierSeq
+                         , _exceptionDeclarationDeclarator :: Declarator }
+  | ExceptionDeclarationAbstract { _exceptionDeclarationAbstractPos :: SourcePos
+                                 , _exceptionDeclarationAbstractAttributes :: [AttributeSpecifier]
+                                 , _exceptionDeclarationAbstractTypeSpecifiers :: TypeSpecifierSeq
+                                 , _exceptionDeclarationAbstractDeclarator :: Maybe AbstractDeclarator }
+  | ThreeDotDeclaration { _threeDotDeclarationPos :: SourcePos }
   deriving (Show, Eq)
 
 exceptionDeclaration :: P ExceptionDeclaration
@@ -2846,29 +2861,35 @@ throwExpression = undefined
 -- noexcept-specification:
 --  	noexcept ( constant-expression )     C++0x
 --  	noexcept     C++0x
-data ExceptionSpecification =
-  ExceptionSpecification
-  deriving (Show, Eq)
+data ExceptionSpecification = ExceptionSpecificationDynamic
+  { _exceptionSpecificationPos :: SourcePos
+  , _exceptionSpecificationValue :: Either DynamicExceptionSpecification NoexceptSpecification
+  } deriving (Show, Eq)
 
 exceptionSpecification :: P ExceptionSpecification
 exceptionSpecification = undefined
 
-data DynamicExceptionSpecification =
-  DynamicExceptionSpecification
-  deriving (Show, Eq)
+data DynamicExceptionSpecification = DynamicExceptionSpecification
+  { _dynamicExceptionSpecificationPos :: SourcePos
+  , _dynamicExceptionSpecificationTypeIdList :: Maybe TypeIdList
+  } deriving (Show, Eq)
 
 dynamicExceptionSpecification :: P DynamicExceptionSpecification
 dynamicExceptionSpecification = undefined
 
-data TypeIdList =
-  TypeIdList
-  deriving (Show, Eq)
+data TypeIdList = TypeIdList
+  { _typeIdListPos :: SourcePos
+  , _typeIdListValue :: [TypeId]
+  , _typeIdListHasThreeDot :: Bool
+  } deriving (Show, Eq)
 
 typeIdList :: P TypeIdList
 typeIdList = undefined
 
-data NoexceptSpecification =
-  NoexceptSpecification
+data NoexceptSpecification
+  = NoexceptSpecification { _noexceptSpecificationPos :: SourcePos
+                          , _noexceptSpecificationExpression :: Expression }
+  | NoexceptSpecificationEmpty { _noexceptSpecificationEmptyPos :: SourcePos }
   deriving (Show, Eq)
 
 noexceptSpecification :: P NoexceptSpecification
