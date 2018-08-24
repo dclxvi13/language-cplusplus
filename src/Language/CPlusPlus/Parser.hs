@@ -2647,15 +2647,43 @@ templateParameterList = undefined
 --  	typename identifier[opt] = type-id
 --  	template < template-parameter-list > class ...opt identifier[opt]     C++0x
 --  	template < template-parameter-list > class identifier[opt] = id-expression
-data TemplateParameter =
-  TemplateParameter
+data TemplateParameter
+  = TemplateTypeParameter { _templateTypeParameterPos :: SourcePos
+                          , _templateTypeParameterValue :: TypeParameter }
+  | TemplateParameterDeclaration { _templateParameterDeclarationPos :: SourcePos
+                                 , _templateParameterDeclarationValue :: ParameterDeclaration }
   deriving (Show, Eq)
 
 templateParameter :: P TemplateParameter
 templateParameter = undefined
 
-data TypeParameter =
-  TypeParameter
+data TypeParameter
+  --  	class ...opt identifier[opt]     C++0x
+  = ClassParameter { _classParameterPos :: SourcePos
+                   , _classParameterHasThreeDots :: Bool
+                   , _classParameterId :: Maybe Id }
+  --  	class identifier[opt] = type-id
+  | ClassWithIdParameter { _classWithIdParameterPos :: SourcePos
+                         , _classWithIdParameterId :: Maybe Id
+                         , _classWithIdParameterTypeId :: TypeId }
+  --  	typename ...opt identifier[opt]     C++0x
+  | TypenameParameter { _typenameParameterPos :: SourcePos
+                      , _typenameParameterHasThreeDots :: Bool
+                      , _typenameParameterId :: Maybe Id }
+  --  	typename identifier[opt] = type-id
+  | TypenameWithIdParameter { _typenameWithIdParameterPos :: SourcePos
+                            , _typenameWithIdParameterId :: Maybe Id
+                            , _typenameWithIdParameterTypeId :: TypeId }
+  --  	template < template-parameter-list > class ...opt identifier[opt]     C++0x
+  | TemplateParameter { _templateParameterPos :: SourcePos
+                      , _templateParameterList :: [TemplateParameter]
+                      , _templateParameterHasThreeDots :: Bool
+                      , _templateParameterId :: Maybe Id }
+  --  	template < template-parameter-list > class identifier[opt] = id-expression
+  | TemplateWithIdParameter { _templateWithIdParameterPos :: SourcePos
+                            , _templateWithIdParameterList :: [TemplateParameter]
+                            , _templateWithIdParameterId :: Maybe Id
+                            , _templateWithIdParameterExpression :: Expression }
   deriving (Show, Eq)
 
 typeParameter :: P TypeParameter
@@ -2677,37 +2705,50 @@ typeParameter = undefined
 --  	constant-expression     C++0x
 --  	type-id     C++0x
 --  	id-expression     C++0x
-data SimpleTemplateId =
-  SimpleTemplateId
-  deriving (Show, Eq)
+data SimpleTemplateId = SimpleTemplateId
+  { _simpleTemplateIdPos :: SourcePos
+  , _simpleTemplateIdName :: TemplateName
+  , _simpleTemplateIdArguments :: Maybe TemplateArgumentList
+  } deriving (Show, Eq)
 
 simpleTemplateId :: P SimpleTemplateId
 simpleTemplateId = undefined
 
-data TemplateId =
-  TemplateId
+data TemplateId
+  = TemplateIdSimple { _templateIdSimplePos :: SourcePos
+                     , _templateIdSimpleValue :: SimpleTemplateId }
+  | TemplateIdOperator { _templateIdOperatorPos :: SourcePos
+                       , _templateIdOperatorFunction :: OperatorFunctionId
+                       , _templateIdOperatorArguments :: Maybe TemplateArgumentList }
+  | TemplateIdLiteral { _templateIdLiteralPos :: SourcePos
+                      , _templateIdLiteralOperator :: LiteralOperatorId
+                      , _templateIdLiteralArguments :: Maybe TemplateArgumentList }
   deriving (Show, Eq)
 
 templateId :: P TemplateId
 templateId = undefined
 
-data TemplateName =
-  TemplateName
-  deriving (Show, Eq)
+data TemplateName = TemplateName
+  { _templateNamePos :: SourcePos
+  , _templateNameValue :: Id
+  } deriving (Show, Eq)
 
 templateName :: P TemplateName
 templateName = undefined
 
-data TemplateArgumentList =
-  TemplateArgumentList
-  deriving (Show, Eq)
+data TemplateArgumentList = TemplateArgumentList
+  { _templateArgumentListPos :: SourcePos
+  , _templateArgumentListValue :: [TemplateArgument]
+  , _templateArgumentListHasThreeDots :: Bool
+  } deriving (Show, Eq)
 
 templateArgumentList :: P TemplateArgumentList
 templateArgumentList = undefined
 
-data TemplateArgument =
-  TemplateArgument
-  deriving (Show, Eq)
+data TemplateArgument = TemplateArgument
+  { _templateArgumentPos :: SourcePos
+  , _templateArgumentValue :: Either Expression TypeId
+  } deriving (Show, Eq)
 
 templateArgument :: P TemplateArgument
 templateArgument = undefined
@@ -2716,8 +2757,16 @@ templateArgument = undefined
 -- typename-specifier:
 --  	typename ::opt nested-name-specifier identifier     C++0x
 --  	typename ::opt nested-name-specifier template[opt] simple-template-id     C++0x
-data TypenameSpecifier =
-  TypenameSpecifier
+data TypenameSpecifier
+  = TypenameSpecifier { _typenameSpecifierPos :: SourcePos
+                      , _typenameSpecifierHasSquareDot :: Bool
+                      , _typenameSpecifierNestedName :: NestedNameSpecifier
+                      , _typenameSpecifierId :: Id }
+  | TypenameSpecifierTemplate { _typenameSpecifierTemplatePos :: SourcePos
+                              , _typenameSpecifierTemplateHasSquareDot :: Bool
+                              , _typenameSpecifierTemplateNestedName :: NestedNameSpecifier
+                              , _typenameSpecifierTemplateHasTemplateKW :: Bool
+                              , _typenameSpecifierTemplateId :: SimpleTemplateId }
   deriving (Show, Eq)
 
 typenameSpecifier :: P TypenameSpecifier
