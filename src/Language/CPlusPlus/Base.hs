@@ -1,6 +1,5 @@
 module Language.CPlusPlus.Base where
 
-import Language.CPlusPlus.AST
 import Language.CPlusPlus.Token
 
 import Text.Parsec (between)
